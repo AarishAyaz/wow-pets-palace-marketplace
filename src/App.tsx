@@ -53,7 +53,7 @@ function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <Router>
+    <Router basename="/wowpets">
       <Layout>
         <Routes>
           <Route path="/" element={<Home />} />

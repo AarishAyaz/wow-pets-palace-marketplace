@@ -278,8 +278,7 @@ export function ProductsPage() {
                     className="w-full py-2"
                     onClick={() => setSelectedTags([])}
                   >
-                    Clear Tags
-                  </Button>
+                    Clear Tags                  </Button>
                 )}
               </div>
             </div>
