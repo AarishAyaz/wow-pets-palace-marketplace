@@ -162,9 +162,9 @@ export function ProductsPage() {
         </div>
 
         {/* Layout */}
-        <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex flex-col lg:flex-row sm:flex-col gap-6">
           {/* -------- Left Sidebar: Categories -------- */}
-          <aside className="w-80 shrink-0">
+          <aside className="w-80 shrink-0 sm:w-full">
             <div className="bg-card rounded-xl border p-6 sticky top-24 flex flex-col gap-6">
               {/* Categories */}
               <div>
@@ -286,8 +286,8 @@ export function ProductsPage() {
           </aside>
 
           {/* -------- Products Grid -------- */}
-          <section className="lg:col-span-9">
-            <div className="flex flex-wrap gap-6 justify-center lg:justify-start">
+          <section className="lg:col-span-9 w-full sm:w-[280px]">
+            <div className="flex flex-col gap-6 sm:flex-row sm:flex-wrap sm:justify-center lg:justify-start">
               {displayedProducts.map((product) => (
                 <ProductCard
                   key={product.id}

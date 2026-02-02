@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
 import { HeroSection } from "./components/HeroSection";
@@ -15,6 +15,8 @@ import { AboutUsSection } from "./components/AboutUsSection";
 import { FAQSection } from "./components/FAQSection";
 import { ProductsPage } from "./components/ProductsPage";
 import { ProductDetailsPage } from "./components/ProductDetails";
+import { LoginPage } from "./components/LoginPage";
+import { SignupPage } from "./components/SignupPage";
 
 function Home() {
   return (
@@ -35,22 +37,32 @@ function Home() {
   );
 }
 
+// Wrapper component to handle conditional layout
+function Layout({ children }: { children: React.ReactNode }) {
+  const location = useLocation();
+  const hideHeaderFooter = location.pathname === "/login" || location.pathname === "/signup";
+
+  return (
+    <div className="min-h-screen bg-background">
+      {!hideHeaderFooter && <Header />}
+      <main>{children}</main>
+      {!hideHeaderFooter && <Footer />}
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-background">
-        <Header />
-
-        <main>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/shop" element={<ProductsPage />} />
-            <Route path="/product/:id" element={<ProductDetailsPage />} />
-          </Routes>
-        </main>
-
-        <Footer />
-      </div>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/shop" element={<ProductsPage />} />
+          <Route path="/product/:id" element={<ProductDetailsPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+        </Routes>
+      </Layout>
     </Router>
   );
 }
