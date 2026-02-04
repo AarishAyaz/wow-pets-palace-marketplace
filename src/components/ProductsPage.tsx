@@ -285,24 +285,25 @@ export function ProductsPage() {
           </aside>
 
           {/* -------- Products Grid -------- */}
-          <section className="lg:col-span-9 w-full sm:w-[280px]">
-            <div className="flex flex-col gap-6 sm:flex-row sm:flex-wrap sm:justify-center lg:justify-start">
-              {displayedProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  id={product.id}
-                  name={product.name}
-                  image={product.featured_image}
-                  price={product.original_price}
-                  originalPrice={product.original_price}
-                  discountPercentage={product.discountPercentage}
-                  rating={product.rating}
-                  reviewsCount={product.reviewsCount}
-                  category={product.categoryTitle}
-                />
-              ))}
-            </div>
-          </section>
+<section className="lg:col-span-9 w-full sm:w-[280px]">
+  <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+    {displayedProducts.map((product) => (
+      <ProductCard
+        key={product.id}
+        id={product.id}
+        name={product.name}
+        image={product.featured_image}
+        price={product.original_price}
+        originalPrice={product.original_price}
+        discountPercentage={product.discountPercentage}
+        rating={product.rating}
+        reviewsCount={product.reviewsCount}
+        category={product.categoryTitle}
+      />
+    ))}
+  </div>
+</section>
+
         </div>
       </main>
     </div>
