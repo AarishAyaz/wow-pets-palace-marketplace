@@ -171,27 +171,28 @@ export function ProductDetailsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Left Column - Images */}
-          <div className="space-y-4">
+          <div className="space-y-4 object-contain">
             {/* Main Image with Professional Shine Effect */}
-            <Card className="overflow-hidden border-2 border-border/50">
-              <div
-                className="aspect-square bg-muted/30 relative"
-                style={{ overflow: "hidden" }}
-                onMouseEnter={() => setIsHovered(true)}
-                onMouseLeave={() => setIsHovered(false)}
-              >
-                {/* Product Image — subtle scale on hover */}
-                <img
-                  src={selectedImage}
-                  alt={product.name}
-                  className="w-full h-full object-contain relative z-10"
-                  style={{
-                    transition: "transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
-                    transform: isHovered ? "scale(1.04)" : "scale(1)",
-                  }}
-                />
-
-                {/* ✨ Shine sweep overlay — Amazon-style diagonal glare */}
+<Card className="overflow-hidden border-2 border-border/50">
+  <div
+    className="relative group mx-auto w-full"
+    style={{
+      height: "70vh",        // Fixed height
+      maxHeight: "70vh",
+      overflow: "hidden",
+    }}
+    onMouseEnter={() => setIsHovered(true)}
+    onMouseLeave={() => setIsHovered(false)}
+  >
+    <img
+      src={selectedImage}
+      alt={product.name}
+      className="w-full h-full object-contain relative z-10 bg-muted/20"
+      style={{
+        transition: "transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+        transform: isHovered ? "scale(1.04)" : "scale(1)",
+      }}
+    />
                 <span
                   aria-hidden="true"
                   style={{

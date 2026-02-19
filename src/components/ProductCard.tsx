@@ -41,15 +41,16 @@ export function ProductCard({
   className="group flex flex-col h-full overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300"
 >
   {/* Image */}
-  <div className="relative w-full">
-    <div className="aspect-[4/3] w-full overflow-hidden bg-gray-50 sm:h-56 lg:h-48">
+  <div className="relative w-full overflow-hidden">
+    <div className="aspect-square w-full overflow-hidden bg-gray-50 sm:h-56 lg:h-48">
       <ImageWithFallback
         src={image}
         alt={name}
-        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+        className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
         loading="lazy"
       />
     </div>
+           <div className="absolute inset-0 bg-gradient-to-t from-black/5 via-transparent to-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
     {discountPercentage > 0 && (
       <Badge className="absolute top-3 left-3 bg-destructive text-destructive-foreground text-xs">
         {discountPercentage}% OFF
