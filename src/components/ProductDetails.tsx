@@ -17,6 +17,7 @@ import { Badge } from "./ui/badge";
 import { Card, CardContent } from "./ui/card";
 import { Separator } from "./ui/separator";
 import { useNavigate } from "react-router-dom";
+import { ProductCard } from "./ProductCard";
 
 // Inject keyframes once
 const shineKeyframes = `
@@ -173,26 +174,27 @@ export function ProductDetailsPage() {
           {/* Left Column - Images */}
           <div className="space-y-4 object-contain">
             {/* Main Image with Professional Shine Effect */}
-<Card className="overflow-hidden border-2 border-border/50">
-  <div
-    className="relative group mx-auto w-full"
-    style={{
-      height: "70vh",        // Fixed height
-      maxHeight: "70vh",
-      overflow: "hidden",
-    }}
-    onMouseEnter={() => setIsHovered(true)}
-    onMouseLeave={() => setIsHovered(false)}
-  >
-    <img
-      src={selectedImage}
-      alt={product.name}
-      className="w-full h-full object-contain relative z-10 bg-muted/20"
-      style={{
-        transition: "transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
-        transform: isHovered ? "scale(1.04)" : "scale(1)",
-      }}
-    />
+            <Card className="overflow-hidden border-2 border-border/50">
+              <div
+                className="relative group mx-auto w-full"
+                style={{
+                  height: "70vh", // Fixed height
+                  maxHeight: "70vh",
+                  overflow: "hidden",
+                }}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+              >
+                <img
+                  src={selectedImage}
+                  alt={product.name}
+                  className="w-full h-full object-contain relative z-10 bg-muted/20"
+                  style={{
+                    transition:
+                      "transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+                    transform: isHovered ? "scale(1.04)" : "scale(1)",
+                  }}
+                />
                 <span
                   aria-hidden="true"
                   style={{
@@ -491,82 +493,20 @@ export function ProductDetailsPage() {
                 More from {product.categoryTitle}
               </span>
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {relatedProducts.map((item) => (
-                <Card
-                  onClick={() => navigate(`/product/${item.id}`)}
+                <ProductCard
                   key={item.id}
-                  className="cursor-pointer group border border-border/60 hover:border-primary/40 hover:shadow-md transition-all duration-200"
-                >
-                  <div
-                    className="aspect-square bg-muted/30 relative overflow-hidden"
-                    style={{ overflow: "hidden" }}
-                  >
-                    <img
-                      src={`https://www.wowpetspalace.com/test/${item.featured_image}`}
-                      alt={item.name}
-                      className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
-                    />
-
-                    {/* Shine on related product cards too */}
-                    <span
-                      aria-hidden="true"
-                      className="absolute inset-0 pointer-events-none overflow-hidden z-10"
-                    >
-                      <span
-                        className="absolute top-[-50%] left-[-50%] h-[200%] w-[55%] opacity-0 group-hover:opacity-100"
-                        style={{
-                          background:
-                            "linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.12) 58%, transparent 70%)",
-                          animation:
-                            "shine-sweep 0.65s cubic-bezier(0.4,0,0.2,1) forwards",
-                          animationPlayState: "paused",
-                        }}
-                      />
-                    </span>
-
-                    {item.discountPercentage > 0 && (
-                      <Badge className="absolute top-3 left-3 bg-destructive text-white z-20">
-                        -{item.discountPercentage}%
-                      </Badge>
-                    )}
-                  </div>
-
-                  <CardContent className="p-4 space-y-2">
-                    <h3 className="font-semibold text-sm line-clamp-2">
-                      {item.name}
-                    </h3>
-
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-primary">
-                        $
-                        {item.discountPercentage > 0
-                          ? (
-                              item.original_price *
-                              (1 - item.discountPercentage / 100)
-                            ).toFixed(2)
-                          : item.original_price}
-                      </span>
-
-                      {item.discountPercentage > 0 && (
-                        <span className="text-xs line-through text-muted-foreground">
-                          ${item.original_price}
-                        </span>
-                      )}
-                    </div>
-
-                    <Button
-                      size="sm"
-                      className="w-full mt-2"
-                      onClick={() =>
-                        (window.location.href = `/wowpets/product/${item.id}`)
-                      }
-                    >
-                      View Product
-                    </Button>
-                  </CardContent>
-                </Card>
+                  id={item.id}
+                  name={item.name}
+                  image={`https://www.wowpetspalace.com/test/${item.featured_image}`}
+                  price={item.original_price}
+                  originalPrice={item.original_price}
+                  discountPercentage={item.discountPercentage}
+                  rating={item.overall_rating || 0}
+                  reviewsCount={item.reviewsCount || 0}
+                  category={item.categoryTitle}
+                />
               ))}
             </div>
           </div>
