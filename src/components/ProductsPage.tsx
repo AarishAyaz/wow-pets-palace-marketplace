@@ -9,6 +9,7 @@ import axios from "axios";
 interface Product {
   tags: any;
   id: string;
+  slug: string;
   name: string;
   featured_image: string;
   original_price: number;
@@ -47,6 +48,7 @@ export function ProductsPage() {
 
         const mapped = data.result.map((item: any) => ({
           id: item.id,
+          slug: item.slug,
           name: item.name,
           featured_image: `https://www.wowpetspalace.com/test/${item.featured_image}`,
           original_price: item.original_price,
@@ -71,6 +73,7 @@ export function ProductsPage() {
       try {
         const { data } = await axios.get(
           "https://www.wowpetspalace.com/test/subCategory/getCountCategoryProduct"
+          
         );
 
         const mapped = data.result.map((item: any) => ({
@@ -303,6 +306,7 @@ export function ProductsPage() {
       <ProductCard
         key={product.id}
         id={product.id}
+        slug={product.slug}
         name={product.name}
         image={product.featured_image}
         price={product.original_price}

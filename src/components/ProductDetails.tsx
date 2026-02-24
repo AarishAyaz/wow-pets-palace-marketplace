@@ -16,7 +16,6 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Card, CardContent } from "./ui/card";
 import { Separator } from "./ui/separator";
-import { useNavigate } from "react-router-dom";
 import { ProductCard } from "./ProductCard";
 
 // Inject keyframes once
@@ -40,7 +39,7 @@ if (typeof document !== "undefined") {
 }
 
 export function ProductDetailsPage() {
-  const { id } = useParams();
+  const { slug } = useParams();
   const [product, setProduct] = useState<any>(null);
   const [selectedImage, setSelectedImage] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
@@ -48,33 +47,82 @@ export function ProductDetailsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
   const [isHovered, setIsHovered] = useState(false);
-  const navigate = useNavigate();
 
-  useEffect(() => {
-    setIsLoading(true);
-    axios
-      .get("https://www.wowpetspalace.com/test/product/getallFeaturedProduct")
-      .then((res) => {
-        const allProducts = res.data.result || [];
-        const found = allProducts.find((p: any) => String(p.id) === String(id));
+useEffect(() => {
+  if (!slug) return;
 
-        if (found) {
-          setProduct(found);
-          const mainImage = `https://www.wowpetspalace.com/test/${found.featured_image}`;
-          setSelectedImage(mainImage);
+  const fetchProduct = async () => {
+    try {
+      setIsLoading(true);
 
-          const related = allProducts.filter(
-            (p: any) =>
-              p.categoryTitle === found.categoryTitle &&
-              String(p.id) !== String(found.id),
-          );
-          setRelatedProducts(related.slice(0, 6));
-        }
+      // 1️⃣ Fetch product by slug
+      const productRes = await axios.get(
+        `https://www.wowpetspalace.com/test/product/getProducts/1?slug=${slug}`
+      );
 
-        setIsLoading(false);
-      })
-      .catch(() => setIsLoading(false));
-  }, [id]);
+      const productData = productRes.data?.data?.[0];
+
+      if (!productData) {
+        setProduct(null);
+        return;
+      }
+
+      setProduct(productData);
+
+      const baseUrl = "https://www.wowpetspalace.com/test/";
+      setSelectedImage(`${baseUrl}${productData.featured_image}`);
+
+      // 2️⃣ Fetch related products
+      const relatedRes = await axios.get(
+        "https://www.wowpetspalace.com/test/product/getallFeaturedProduct"
+      );
+
+      const allProducts = relatedRes.data.result || [];
+
+      const related = allProducts.filter(
+        (p: any) =>
+          p.categoryTitle === productData.categoryTitle &&
+          p.slug !== productData.slug
+      );
+
+      setRelatedProducts(related.slice(0, 6));
+
+    } catch (error) {
+      console.error("Error fetching product:", error);
+      setProduct(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  fetchProduct();
+}, [slug]);
+
+  // useEffect(() => {
+  //   setIsLoading(true);
+  //   axios
+  //     .get("https://www.wowpetspalace.com/test/product/getallFeaturedProduct")
+  //     .then((res) => {
+  //       const allProducts = res.data.result || [];
+  //       const found = allProducts.find((p: any) => String(p.id) === String(id));
+
+  //       if (found) {
+  //         setProduct(found);
+  //         const mainImage = `https://www.wowpetspalace.com/test/${found.featured_image}`;
+  //         setSelectedImage(mainImage);
+
+  //         const related = allProducts.filter(
+  //           (p: any) =>
+  //             p.categoryTitle === found.categoryTitle &&
+  //             String(p.id) !== String(found.id),
+  //         );
+  //         setRelatedProducts(related.slice(0, 6));
+  //       }
+
+  //       setIsLoading(false);
+  //     })
+  //     .catch(() => setIsLoading(false));
+  // }, [id]);
 
   if (isLoading) {
     return (
@@ -241,7 +289,7 @@ export function ProductDetailsPage() {
                 {/* Badges Overlay */}
                 <div className="absolute top-4 left-4 right-4 flex items-start justify-between gap-2 z-30">
                   {hasDiscount && (
-                    <Badge className="bg-destructive/95 backdrop-blur-sm text-white border-0 text-sm font-semibold px-3 py-1.5 shadow-lg">
+                    <Badge className="bg-destructive/95 backdrop-blur-sm text-gray border-0 text-sm font-semibold px-3 py-1.5 shadow-lg">
                       -{product.discountPercentage}% OFF
                     </Badge>
                   )}
@@ -498,6 +546,7 @@ export function ProductDetailsPage() {
                 <ProductCard
                   key={item.id}
                   id={item.id}
+                  slug={item.slug}
                   name={item.name}
                   image={`https://www.wowpetspalace.com/test/${item.featured_image}`}
                   price={item.original_price}

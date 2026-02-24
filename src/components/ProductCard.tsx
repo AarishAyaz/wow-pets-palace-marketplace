@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 
 interface ProductCardProps {
   id: number | string;
+  slug: string;
   name: string;
   image: string;
   price: number;
@@ -20,6 +21,7 @@ interface ProductCardProps {
 export function ProductCard({
   id,
   name,
+  slug,
   image,
   price,
   originalPrice,
@@ -37,7 +39,7 @@ export function ProductCard({
 
   return (
     <Card
-  onClick={() => navigate(`/product/${id}`)}
+  onClick={() => navigate(`/product/${slug}`)}
   className="group flex flex-col h-full overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300"
 >
   {/* Image */}
