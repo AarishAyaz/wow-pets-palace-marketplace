@@ -43,10 +43,10 @@ export function ProductsPage() {
     const fetchProducts = async () => {
       try {
         const { data } = await axios.get(
-          "https://www.wowpetspalace.com/test/product/getallFeaturedProduct"
+          "https://www.wowpetspalace.com/test/product/getProducts/1"
         );
 
-        const mapped = data.result.map((item: any) => ({
+        const mapped = data.data.map((item: any) => ({
           id: item.id,
           slug: item.slug,
           name: item.name,
@@ -300,8 +300,9 @@ export function ProductsPage() {
           </aside>
 
           {/* -------- Products Grid -------- */}
-<section className="lg:col-span-9 w-full sm:w-[280px]">
-  <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+<section className="flex-1">
+  {/* <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4"> */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-6 auto-rows-fr">
     {displayedProducts.map((product) => (
       <ProductCard
         key={product.id}

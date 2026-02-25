@@ -19,7 +19,6 @@ interface ProductCardProps {
 }
 
 export function ProductCard({
-  id,
   name,
   slug,
   image,
@@ -43,15 +42,15 @@ export function ProductCard({
   className="group flex flex-col h-full overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300"
 >
   {/* Image */}
-  <div className="relative w-full overflow-hidden">
-    <div className="aspect-square w-full overflow-hidden bg-gray-50 sm:h-56 lg:h-48">
-      <ImageWithFallback
-        src={image}
-        alt={name}
-        className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
-        loading="lazy"
-      />
-    </div>
+<div className="relative h-70 w-full">
+  <div className="w-full h-56 lg:h-52 bg-gray-50 flex items-center justify-center overflow-hidden">
+    <ImageWithFallback
+      src={image}
+      alt={name}
+      className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105"
+      loading="lazy"
+    />
+  </div>
            <div className="absolute inset-0 bg-gradient-to-t from-black/5 via-transparent to-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
     {discountPercentage > 0 && (
       <Badge className="absolute top-3 left-3 bg-destructive text-destructive-foreground text-xs">
@@ -66,7 +65,7 @@ export function ProductCard({
   </div>
 
   {/* Content */}
-  <CardContent className="flex flex-col flex-1 p-4 gap-3">
+  <CardContent className="flex flex-col flex-1  p-4 gap-3">
     <h3 className="text-primary text-sm lg:text-base font-medium line-clamp-2">
       {name}
     </h3>
@@ -112,7 +111,7 @@ export function ProductCard({
 </div>
 
     {/* Add to Cart */}
-    <Button className="mt-auto w-full bg-gradient-to-r from-primary to-primary/80 text-xs lg:text-sm flex items-center justify-center gap-1">
+    <Button className="mt-auto w-full bg-gradient-to-r from-primary to-primary/80 text-xs lg:text-sm flex items-center  justify-center gap-1">
       <ShoppingCart className="w-4 h-4 group-hover:scale-110 transition-transform" />
       Add to Cart
     </Button>
