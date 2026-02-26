@@ -69,8 +69,37 @@ useEffect(() => {
 
       setProduct(productData);
 
-      const baseUrl = "https://www.wowpetspalace.com/test/";
-      setSelectedImage(`${baseUrl}${productData.featured_image}`);
+const baseUrl = "https://www.wowpetspalace.com/test/";
+
+const extractImages = (product: any) => {
+  const images: string[] = [];
+
+  if (product.featured_image) {
+    images.push(`${baseUrl}${product.featured_image}`);
+  }
+
+  if (Array.isArray(product.images)) {
+    product.images.forEach((img: any) => {
+      if (img) images.push(`${baseUrl}${img}`);
+    });
+  }
+
+  if (Array.isArray(product.product_images)) {
+    product.product_images.forEach((img: any) => {
+      if (img) images.push(`${baseUrl}${img}`);
+    });
+  }
+
+  return [...new Set(images)];
+};
+
+const images = extractImages(productData);
+
+setProduct(productData);
+
+if (images.length > 0) {
+  setSelectedImage(images[0]); // ✅ Always show first available image
+}
 
       // 2️⃣ Fetch related products
       const relatedRes = await axios.get(

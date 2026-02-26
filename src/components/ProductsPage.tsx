@@ -37,6 +37,7 @@ export function ProductsPage() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const itemsPerPage = 12;
+const baseUrl = "https://www.wowpetspalace.com/test/";
 
   /* ---------------- Fetch Products ---------------- */
   useEffect(() => {
@@ -50,7 +51,7 @@ export function ProductsPage() {
           id: item.id,
           slug: item.slug,
           name: item.name,
-          featured_image: `https://www.wowpetspalace.com/test/${item.featured_image}`,
+          featured_image: getProductCardImage(item),
           original_price: item.original_price,
           discountPercentage: item.discountPercentage ?? 0,
           rating: item.overall_rating ?? 0,
@@ -67,6 +68,14 @@ export function ProductsPage() {
     fetchProducts();
   }, []);
 
+const getProductCardImage = (item: any) => {
+  if (item.featured_image) return `${baseUrl}${item.featured_image}`;
+
+  if (Array.isArray(item.images) && item.images.length > 0)
+    return `${baseUrl}${item.images[0]}`;
+
+  return "/placeholder-image.png";
+};
   /* ---------------- Fetch Categories ---------------- */
   useEffect(() => {
     const fetchCategories = async () => {
