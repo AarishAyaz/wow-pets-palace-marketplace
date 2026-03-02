@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 
 interface Product {
-  tags: any;
   id: string;
   slug: string;
   name: string;
@@ -25,64 +24,104 @@ interface Category {
   productCount: number;
 }
 
+interface Tag {
+  id: number;
+  name: string;
+}
+
 export function ProductsPage() {
+  const baseUrl = "https://www.wowpetspalace.com/test/";
+  const itemsPerPage = 12;
+
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
+
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [minPrice, setMinPrice] = useState<number | null>(null);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
-  const [tags, setTags] = useState<{ id: number; name: string }[]>([]);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<number[]>([]);
 
-  const itemsPerPage = 12;
-const baseUrl = "https://www.wowpetspalace.com/test/";
+  const [loading, setLoading] = useState(false);
+  const [totalPages, setTotalPages] = useState(1);
 
-  /* ---------------- Fetch Products ---------------- */
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const { data } = await axios.get(
-          "https://www.wowpetspalace.com/test/product/getProducts/1"
+  /* ---------------- Image Helper ---------------- */
+  const getProductCardImage = (item: any) => {
+    if (item.featured_image) return `${baseUrl}${item.featured_image}`;
+    if (Array.isArray(item.images) && item.images.length > 0)
+      return `${baseUrl}${item.images[0]}`;
+    return "/placeholder-image.png";
+  };
+
+  /* ---------------- Fetch Products (Server Side Filtering) ---------------- */
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+
+      const params: any = {
+        limit: itemsPerPage,
+        page: currentPage,
+      };
+
+      // Category filter
+      if (selectedCategory) {
+        const selected = categories.find(
+          (cat) => cat.title === selectedCategory
         );
-
-        const mapped = data.data.map((item: any) => ({
-          id: item.id,
-          slug: item.slug,
-          name: item.name,
-          featured_image: getProductCardImage(item),
-          original_price: item.original_price,
-          discountPercentage: item.discountPercentage ?? 0,
-          rating: item.overall_rating ?? 0,
-          reviewsCount: item.reviewsCount ?? 0,
-          categoryTitle: item.categoryTitle,
-        }));
-
-        setProducts(mapped);
-      } catch (error) {
-        console.error("Error fetching products", error);
+        if (selected) params.cat_id = selected.id;
       }
-    };
 
-    fetchProducts();
-  }, []);
+      // Price filter
+      if (minPrice !== null) params.min_price = minPrice;
+      if (maxPrice !== null) params.max_price = maxPrice;
 
-const getProductCardImage = (item: any) => {
-  if (item.featured_image) return `${baseUrl}${item.featured_image}`;
+      // Tag filter
+      if (selectedTags.length > 0) {
+        params["search_tag[]"] = selectedTags;
+      }
 
-  if (Array.isArray(item.images) && item.images.length > 0)
-    return `${baseUrl}${item.images[0]}`;
+      // Search filter
+      if (searchQuery) params.search = searchQuery;
 
-  return "/placeholder-image.png";
-};
+      const { data } = await axios.get(
+        "https://www.wowpetspalace.com/test/product/getProducts/1",
+        { params }
+      );
+
+      const mapped = data.data.map((item: any) => ({
+        id: item.id,
+        slug: item.slug,
+        name: item.name,
+        featured_image: getProductCardImage(item),
+        original_price: item.original_price,
+        discountPercentage: item.discountPercentage ?? 0,
+        rating: item.overall_rating ?? 0,
+        reviewsCount: item.reviewsCount ?? 0,
+        categoryTitle: item.categoryTitle,
+      }));
+
+      setProducts(mapped);
+
+      // If backend returns total count, use it
+      if (data.total) {
+        setTotalPages(Math.ceil(data.total / itemsPerPage));
+      }
+    } catch (error) {
+      console.error("Error fetching products", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   /* ---------------- Fetch Categories ---------------- */
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const { data } = await axios.get(
           "https://www.wowpetspalace.com/test/subCategory/getCountCategoryProduct"
-          
         );
 
         const mapped = data.result.map((item: any) => ({
@@ -100,6 +139,7 @@ const getProductCardImage = (item: any) => {
     fetchCategories();
   }, []);
 
+  /* ---------------- Fetch Tags ---------------- */
   useEffect(() => {
     const fetchTags = async () => {
       try {
@@ -111,59 +151,39 @@ const getProductCardImage = (item: any) => {
         console.error("Error fetching tags", error);
       }
     };
+
     fetchTags();
   }, []);
 
-  /* ---------------- Filtering ---------------- */
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch = product.name
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
+  /* ---------------- Reset Page When Filters Change ---------------- */
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory, minPrice, maxPrice, selectedTags, searchQuery]);
 
-    const matchesCategory = selectedCategory
-      ? product.categoryTitle === selectedCategory
-      : true;
-    const matchesPrice =
-      (minPrice === null || product.original_price >= minPrice) &&
-      (maxPrice === null || product.original_price <= maxPrice);
-
-    const matchesTags =
-      selectedTags.length === 0 ||
-      product.tags?.some((tag: string) => selectedTags.includes(tag));
-
-    return matchesSearch && matchesCategory && matchesPrice && matchesTags;
-  });
-
-  /* ---------------- Pagination ---------------- */
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const displayedProducts = filteredProducts.slice(
-    startIndex,
-    startIndex + itemsPerPage
-  );
+  /* ---------------- Fetch Products When Dependencies Change ---------------- */
+  useEffect(() => {
+    fetchProducts();
+  }, [
+    currentPage,
+    selectedCategory,
+    minPrice,
+    maxPrice,
+    selectedTags,
+    searchQuery,
+    categories,
+  ]);
 
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-8">
+
         {/* Page Title */}
         <div className="text-center space-y-4 pt-8 pb-8">
           <h1 className="text-primary">Shop Pet Products</h1>
           <p className="text-muted-foreground max-w-3xl mx-auto">
             Find the perfect food, toys, treats, and accessories for your pet.
           </p>
-        </div>        {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-          <a href="/" className="hover:text-foreground transition-colors">
-            Home
-          </a>
-          <span>/</span>
-          <a
-            href="/wowpets/shop"
-            className="hover:text-foreground transition-colors text-foreground font-medium"
-          >
-            Products
-          </a>
-        </nav>
+        </div>
 
         {/* Search */}
         <div className="max-w-3xl mx-auto mb-8">
@@ -185,11 +205,12 @@ const getProductCardImage = (item: any) => {
           </div>
         </div>
 
-        {/* Layout */}
-        <div className="flex flex-col lg:flex-row sm:flex-col gap-6">
-          {/* -------- Left Sidebar: Categories -------- */}
+        <div className="flex flex-col lg:flex-row gap-6">
+
+          {/* Sidebar */}
           <aside className="w-80 shrink-0 sm:w-full">
             <div className="bg-card rounded-xl border p-6 sticky top-24 flex flex-col gap-6">
+
               {/* Categories */}
               <div>
                 <h3 className="font-semibold text-base mb-3">Categories</h3>
@@ -198,11 +219,7 @@ const getProductCardImage = (item: any) => {
                     <li>
                       <button
                         onClick={() => setSelectedCategory(null)}
-                        className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${
-                          selectedCategory === null
-                            ? "bg-primary text-primary-foreground"
-                            : "hover:bg-muted"
-                        }`}
+                        className="w-full text-left px-3 py-2 rounded-md text-sm font-medium hover:bg-muted"
                       >
                         All Categories
                       </button>
@@ -211,12 +228,10 @@ const getProductCardImage = (item: any) => {
                     {categories.map((category) => (
                       <li key={category.id}>
                         <button
-                          onClick={() => setSelectedCategory(category.title)}
-                          className={`w-full flex justify-between px-3 py-2 rounded-md text-sm font-medium ${
-                            selectedCategory === category.title
-                              ? "bg-primary text-primary-foreground"
-                              : "hover:bg-muted"
-                          }`}
+                          onClick={() =>
+                            setSelectedCategory(category.title)
+                          }
+                          className="w-full flex justify-between px-3 py-2 rounded-md text-sm font-medium hover:bg-muted"
                         >
                           <span>{category.title}</span>
                           <span className="text-xs text-muted-foreground">
@@ -242,7 +257,6 @@ const getProductCardImage = (item: any) => {
                         e.target.value === "" ? null : Number(e.target.value)
                       )
                     }
-                    className="w-1/2"
                   />
                   <Input
                     type="number"
@@ -253,23 +267,21 @@ const getProductCardImage = (item: any) => {
                         e.target.value === "" ? null : Number(e.target.value)
                       )
                     }
-                    className="w-1/2"
                   />
                 </div>
                 <Button
                   variant="outline"
-                  className="w-full py-2"
+                  className="w-full"
                   onClick={() => {
                     setMinPrice(null);
                     setMaxPrice(null);
-                    setCurrentPage(1);
                   }}
                 >
                   Clear Price
                 </Button>
               </div>
 
-              {/* Tags Filter */}
+              {/* Tags */}
               <div>
                 <h4 className="font-semibold text-sm mb-2">Filter by Tags</h4>
                 <div className="flex flex-wrap gap-2 mb-3">
@@ -277,59 +289,70 @@ const getProductCardImage = (item: any) => {
                     <button
                       key={tag.id}
                       onClick={() => {
-                        if (selectedTags.includes(tag.name)) {
+                        if (selectedTags.includes(tag.id)) {
                           setSelectedTags(
-                            selectedTags.filter((t) => t !== tag.name)
+                            selectedTags.filter((t) => t !== tag.id)
                           );
                         } else {
-                          setSelectedTags([...selectedTags, tag.name]);
+                          setSelectedTags([...selectedTags, tag.id]);
                         }
-                        setCurrentPage(1); // reset pagination when filter changes
                       }}
-                      className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors duration-200 ${
-                        selectedTags.includes(tag.name)
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-muted text-muted-foreground border-transparent hover:bg-muted/70"
-                      }`}
+                      className="px-3 py-1 rounded-full text-xs font-medium border hover:bg-muted"
                     >
                       {tag.name}
                     </button>
                   ))}
                 </div>
-                {selectedTags.length > 0 && (
-                  <Button
-                    variant="outline"
-                    className="w-full py-2"
-                    onClick={() => setSelectedTags([])}
-                  >
-                    Clear Tags                  </Button>
-                )}
               </div>
+
             </div>
           </aside>
 
-          {/* -------- Products Grid -------- */}
-<section className="flex-1">
-  {/* <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4"> */}
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-6 auto-rows-fr">
-    {displayedProducts.map((product) => (
-      <ProductCard
-        key={product.id}
-        id={product.id}
-        slug={product.slug}
-        name={product.name}
-        image={product.featured_image}
-        price={product.original_price}
-        originalPrice={product.original_price}
-        discountPercentage={product.discountPercentage}
-        rating={product.rating}
-        reviewsCount={product.reviewsCount}
-        category={product.categoryTitle}
-      />
-    ))}
-  </div>
-</section>
+          {/* Products */}
+          <section className="flex-1">
+            {loading ? (
+              <p>Loading products...</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {products.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    id={product.id}
+                    slug={product.slug}
+                    name={product.name}
+                    image={product.featured_image}
+                    price={product.original_price}
+                    originalPrice={product.original_price}
+                    discountPercentage={product.discountPercentage}
+                    rating={product.rating}
+                    reviewsCount={product.reviewsCount}
+                    category={product.categoryTitle}
+                  />
+                ))}
+              </div>
+            )}
 
+            {/* Pagination */}
+            <div className="flex justify-center gap-4 mt-8">
+              <Button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((prev) => prev - 1)}
+              >
+                Previous
+              </Button>
+
+              <span className="flex items-center">
+                Page {currentPage} of {totalPages}
+              </span>
+
+              <Button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((prev) => prev + 1)}
+              >
+                Next
+              </Button>
+            </div>
+          </section>
         </div>
       </main>
     </div>
