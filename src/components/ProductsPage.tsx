@@ -216,30 +216,44 @@ export function ProductsPage() {
                 <h3 className="font-semibold text-base mb-3">Categories</h3>
                 <ScrollArea className="h-[220px] pr-2">
                   <ul className="space-y-2">
-                    <li>
-                      <button
-                        onClick={() => setSelectedCategory(null)}
-                        className="w-full text-left px-3 py-2 rounded-md text-sm font-medium hover:bg-muted"
-                      >
-                        All Categories
-                      </button>
-                    </li>
+<li>
+  <button
+    onClick={() => setSelectedCategory(null)}
+    className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition
+      ${selectedCategory === null
+        ? "bg-primary text-primary-foreground"
+        : "hover:bg-muted"
+      }`}
+  >
+    All Categories
+  </button>
+</li>
 
-                    {categories.map((category) => (
-                      <li key={category.id}>
-                        <button
-                          onClick={() =>
-                            setSelectedCategory(category.title)
-                          }
-                          className="w-full flex justify-between px-3 py-2 rounded-md text-sm font-medium hover:bg-muted"
-                        >
-                          <span>{category.title}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {category.productCount}
-                          </span>
-                        </button>
-                      </li>
-                    ))}
+{categories.map((category) => {
+  const isActive = selectedCategory === category.title;
+
+  return (
+    <li key={category.id}>
+      <button
+        onClick={() => setSelectedCategory(category.title)}
+        className={`w-full flex justify-between px-3 py-2 rounded-md text-sm font-medium transition
+          ${isActive
+            ? "bg-primary text-primary-foreground shadow-sm"
+            : "hover:bg-muted"
+          }`}
+      >
+        <span>{category.title}</span>
+        <span
+          className={`text-xs ${
+            isActive ? "text-primary-foreground/80" : "text-muted-foreground"
+          }`}
+        >
+          {category.productCount}
+        </span>
+      </button>
+    </li>
+  );
+})}
                   </ul>
                 </ScrollArea>
               </div>
@@ -285,23 +299,29 @@ export function ProductsPage() {
               <div>
                 <h4 className="font-semibold text-sm mb-2">Filter by Tags</h4>
                 <div className="flex flex-wrap gap-2 mb-3">
-                  {tags.map((tag) => (
-                    <button
-                      key={tag.id}
-                      onClick={() => {
-                        if (selectedTags.includes(tag.id)) {
-                          setSelectedTags(
-                            selectedTags.filter((t) => t !== tag.id)
-                          );
-                        } else {
-                          setSelectedTags([...selectedTags, tag.id]);
-                        }
-                      }}
-                      className="px-3 py-1 rounded-full text-xs font-medium border hover:bg-muted"
-                    >
-                      {tag.name}
-                    </button>
-                  ))}
+{tags.map((tag) => {
+  const isActive = selectedTags.includes(tag.id);
+
+  return (
+    <button
+      key={tag.id}
+      onClick={() => {
+        if (isActive) {
+          setSelectedTags(selectedTags.filter((t) => t !== tag.id));
+        } else {
+          setSelectedTags([...selectedTags, tag.id]);
+        }
+      }}
+      className={`px-3 py-1 rounded-full text-xs font-medium border transition
+        ${isActive
+          ? "bg-primary text-primary-foreground border-primary"
+          : "hover:bg-muted"
+        }`}
+    >
+      {tag.name}
+    </button>
+  );
+})}
                 </div>
               </div>
 
