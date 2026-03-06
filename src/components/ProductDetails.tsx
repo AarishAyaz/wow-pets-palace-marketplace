@@ -317,11 +317,11 @@ if (images.length > 0) {
 
                 {/* Badges Overlay */}
                 <div className="absolute top-4 left-4 right-4 flex items-start justify-between gap-2 z-30">
-                  {hasDiscount && (
-                    <Badge className="bg-destructive/95 backdrop-blur-sm text-gray border-0 text-sm font-semibold px-3 py-1.5 shadow-lg">
-                      -{product.discountPercentage}% OFF
-                    </Badge>
-                  )}
+{hasDiscount && (
+  <Badge variant="destructive" className="!bg-red-600 !text-white text-sm font-bold px-3 py-1.5 shadow-md rounded-md">
+    -{product.discountPercentage}% OFF
+  </Badge>
+)}
                   {product.categoryTitle && (
                     <Badge className="ml-auto bg-background/95 backdrop-blur-sm text-foreground border border-border/50 text-sm font-medium px-3 py-1.5 shadow-md">
                       {product.categoryTitle}

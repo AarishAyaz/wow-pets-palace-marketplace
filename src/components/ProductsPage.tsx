@@ -69,7 +69,7 @@ export function ProductsPage() {
       // Category filter
       if (selectedCategory) {
         const selected = categories.find(
-          (cat) => cat.title === selectedCategory
+          (cat) => cat.title === selectedCategory,
         );
         if (selected) params.cat_id = selected.id;
       }
@@ -88,7 +88,7 @@ export function ProductsPage() {
 
       const { data } = await axios.get(
         "https://www.wowpetspalace.com/test/product/getProducts/1",
-        { params }
+        { params },
       );
 
       const mapped = data.data.map((item: any) => ({
@@ -121,7 +121,7 @@ export function ProductsPage() {
     const fetchCategories = async () => {
       try {
         const { data } = await axios.get(
-          "https://www.wowpetspalace.com/test/subCategory/getCountCategoryProduct"
+          "https://www.wowpetspalace.com/test/subCategory/getCountCategoryProduct",
         );
 
         const mapped = data.result.map((item: any) => ({
@@ -144,7 +144,7 @@ export function ProductsPage() {
     const fetchTags = async () => {
       try {
         const { data } = await axios.get(
-          "https://www.wowpetspalace.com/test/shop/shopTags"
+          "https://www.wowpetspalace.com/test/shop/shopTags",
         );
         setTags(data);
       } catch (error) {
@@ -176,7 +176,6 @@ export function ProductsPage() {
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-8">
-
         {/* Page Title */}
         <div className="text-center space-y-4 pt-8 pb-8">
           <h1 className="text-primary">Shop Pet Products</h1>
@@ -206,54 +205,56 @@ export function ProductsPage() {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-6">
-
           {/* Sidebar */}
           <aside className="w-80 shrink-0 sm:w-full">
             <div className="bg-card rounded-xl border p-6 sticky top-24 flex flex-col gap-6">
-
               {/* Categories */}
               <div>
                 <h3 className="font-semibold text-base mb-3">Categories</h3>
                 <ScrollArea className="h-[220px] pr-2">
                   <ul className="space-y-2">
-<li>
-  <button
-    onClick={() => setSelectedCategory(null)}
-    className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition
-      ${selectedCategory === null
-        ? "bg-primary text-primary-foreground"
-        : "hover:bg-muted"
+                    <li>
+                      <button
+                        onClick={() => setSelectedCategory(null)}
+                        className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition
+      ${
+        selectedCategory === null
+          ? "bg-primary text-primary-foreground"
+          : "hover:bg-muted"
       }`}
-  >
-    All Categories
-  </button>
-</li>
+                      >
+                        All Categories
+                      </button>
+                    </li>
 
-{categories.map((category) => {
-  const isActive = selectedCategory === category.title;
+                    {categories.map((category) => {
+                      const isActive = selectedCategory === category.title;
 
-  return (
-    <li key={category.id}>
-      <button
-        onClick={() => setSelectedCategory(category.title)}
-        className={`w-full flex justify-between px-3 py-2 rounded-md text-sm font-medium transition
-          ${isActive
-            ? "bg-primary text-primary-foreground shadow-sm"
-            : "hover:bg-muted"
+                      return (
+                        <li key={category.id}>
+                          <button
+                            onClick={() => setSelectedCategory(category.title)}
+                            className={`w-full flex justify-between px-3 py-2 rounded-md text-sm font-medium transition
+          ${
+            isActive
+              ? "bg-primary text-primary-foreground shadow-sm"
+              : "hover:bg-muted"
           }`}
-      >
-        <span>{category.title}</span>
-        <span
-          className={`text-xs ${
-            isActive ? "text-primary-foreground/80" : "text-muted-foreground"
-          }`}
-        >
-          {category.productCount}
-        </span>
-      </button>
-    </li>
-  );
-})}
+                          >
+                            <span>{category.title}</span>
+                            <span
+                              className={`text-xs ${
+                                isActive
+                                  ? "text-primary-foreground/80"
+                                  : "text-muted-foreground"
+                              }`}
+                            >
+                              {category.productCount}
+                            </span>
+                          </button>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </ScrollArea>
               </div>
@@ -268,7 +269,7 @@ export function ProductsPage() {
                     value={minPrice ?? ""}
                     onChange={(e) =>
                       setMinPrice(
-                        e.target.value === "" ? null : Number(e.target.value)
+                        e.target.value === "" ? null : Number(e.target.value),
                       )
                     }
                   />
@@ -278,7 +279,7 @@ export function ProductsPage() {
                     value={maxPrice ?? ""}
                     onChange={(e) =>
                       setMaxPrice(
-                        e.target.value === "" ? null : Number(e.target.value)
+                        e.target.value === "" ? null : Number(e.target.value),
                       )
                     }
                   />
@@ -299,32 +300,34 @@ export function ProductsPage() {
               <div>
                 <h4 className="font-semibold text-sm mb-2">Filter by Tags</h4>
                 <div className="flex flex-wrap gap-2 mb-3">
-{tags.map((tag) => {
-  const isActive = selectedTags.includes(tag.id);
+                  {tags.map((tag) => {
+                    const isActive = selectedTags.includes(tag.id);
 
-  return (
-    <button
-      key={tag.id}
-      onClick={() => {
-        if (isActive) {
-          setSelectedTags(selectedTags.filter((t) => t !== tag.id));
-        } else {
-          setSelectedTags([...selectedTags, tag.id]);
-        }
-      }}
-      className={`px-3 py-1 rounded-full text-xs font-medium border transition
-        ${isActive
-          ? "bg-primary text-primary-foreground border-primary"
-          : "hover:bg-muted"
+                    return (
+                      <button
+                        key={tag.id}
+                        onClick={() => {
+                          if (isActive) {
+                            setSelectedTags(
+                              selectedTags.filter((t) => t !== tag.id),
+                            );
+                          } else {
+                            setSelectedTags([...selectedTags, tag.id]);
+                          }
+                        }}
+                        className={`px-3 py-1 rounded-full text-xs font-medium border transition
+        ${
+          isActive
+            ? "bg-primary text-primary-foreground border-primary"
+            : "hover:bg-muted"
         }`}
-    >
-      {tag.name}
-    </button>
-  );
-})}
+                      >
+                        {tag.name}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-
             </div>
           </aside>
 
