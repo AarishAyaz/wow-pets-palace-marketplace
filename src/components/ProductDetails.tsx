@@ -47,7 +47,10 @@ export function ProductDetailsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
   const [isHovered, setIsHovered] = useState(false);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
 
+  
 useEffect(() => {
   if (!slug) return;
 
@@ -68,6 +71,16 @@ useEffect(() => {
       }
 
       setProduct(productData);
+        try {
+    setReviewsLoading(true);
+    const reviewsRes = await axios.get(`https://www.wowpetspalace.com/test/product/getProductReviews?product_id=${productData.id}&page=1&limit=10`);
+const reviewsData = reviewsRes.data?.data?.reviews || [];
+setReviews(reviewsData);
+  } catch (error) {
+    console.error("Error fetching reviews:", error);
+  } finally {
+    setReviewsLoading(false);
+  }
 
 const baseUrl = "https://www.wowpetspalace.com/test/";
 
@@ -127,31 +140,6 @@ if (images.length > 0) {
   fetchProduct();
 }, [slug]);
 
-  // useEffect(() => {
-  //   setIsLoading(true);
-  //   axios
-  //     .get("https://www.wowpetspalace.com/test/product/getallFeaturedProduct")
-  //     .then((res) => {
-  //       const allProducts = res.data.result || [];
-  //       const found = allProducts.find((p: any) => String(p.id) === String(id));
-
-  //       if (found) {
-  //         setProduct(found);
-  //         const mainImage = `https://www.wowpetspalace.com/test/${found.featured_image}`;
-  //         setSelectedImage(mainImage);
-
-  //         const related = allProducts.filter(
-  //           (p: any) =>
-  //             p.categoryTitle === found.categoryTitle &&
-  //             String(p.id) !== String(found.id),
-  //         );
-  //         setRelatedProducts(related.slice(0, 6));
-  //       }
-
-  //       setIsLoading(false);
-  //     })
-  //     .catch(() => setIsLoading(false));
-  // }, [id]);
 
   if (isLoading) {
     return (
@@ -226,6 +214,15 @@ if (images.length > 0) {
       ? description.slice(0, 200) + "..."
       : description;
 
+const productReviews = reviews.filter(
+  (review) => review.product_id === product.id
+);
+
+const averageRating =
+  productReviews.length > 0
+    ? productReviews.reduce((sum, r) => sum + Number(r.rating), 0) /
+      productReviews.length
+    : 0;
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-6 lg:py-12">
@@ -402,12 +399,12 @@ if (images.length > 0) {
                     ))}
                   </div>
                   <span className="text-sm font-medium text-foreground">
-                    {product.overall_rating?.toFixed(1) || "4.8"}
+                    {averageRating > 0 ? averageRating.toFixed(1) : "0.0"}
                   </span>
                 </div>
                 <Separator orientation="vertical" className="h-4" />
                 <span className="text-sm text-muted-foreground">
-                  {product.reviewsCount || 124} reviews
+                  {reviews.length} reviews
                 </span>
               </div>
             </div>
@@ -560,6 +557,59 @@ if (images.length > 0) {
             </Card>
           </div>
         </div>
+{/* Product Reviews */}
+<div className="mt-16">
+  <h2 className="text-2xl font-bold mb-6">Customer Reviews</h2>
+
+  {reviewsLoading ? (
+    <p className="text-muted-foreground">Loading reviews...</p>
+  ) : reviews.filter((review) => review.product_id === product.id).length === 0 ? (
+    <p className="text-muted-foreground">No reviews yet.</p>
+  ) : (
+    <div className="space-y-6">
+      {reviews
+        .filter((review) => review.product_id === product.id)
+        .map((review) => (
+          <Card key={review.review_id} className="border-border/50">
+            <CardContent className="p-5 space-y-3">
+
+              {/* Reviewer */}
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold">
+                  {review.user_name || "Anonymous"}
+                </h4>
+
+                {/* Rating */}
+                <div className="flex">
+                  {[...Array(5)].map((_, i) => (
+  <Star
+    key={i}
+    className={`w-4 h-4 ${
+      i < Math.floor(averageRating)
+        ? "fill-amber-400 text-amber-400"
+        : "text-muted"
+    }`}
+  />
+))}
+                </div>
+              </div>
+
+              {/* Review text */}
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                {review.review_text}
+              </p>
+
+              {/* Date */}
+              <p className="text-xs text-muted-foreground">
+                {new Date(review.created_at).toLocaleDateString()}
+              </p>
+
+            </CardContent>
+          </Card>
+        ))}
+    </div>
+  )}
+</div>
 
         {/* Related Products */}
         {relatedProducts.length > 0 && (
