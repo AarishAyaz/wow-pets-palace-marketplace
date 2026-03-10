@@ -31,7 +31,7 @@ interface Tag {
 
 export function ProductsPage() {
   const baseUrl = "https://www.wowpetspalace.com/test/";
-  const itemsPerPage = 12;
+  const itemsPerPage = 10;
 
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -47,6 +47,7 @@ export function ProductsPage() {
 
   const [loading, setLoading] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
+  
 
   /* ---------------- Image Helper ---------------- */
   const getProductCardImage = (item: any) => {
@@ -172,6 +173,7 @@ export function ProductsPage() {
     searchQuery,
     categories,
   ]);
+
 
   return (
     <div className="min-h-screen bg-background">
