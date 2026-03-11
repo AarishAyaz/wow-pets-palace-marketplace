@@ -29,6 +29,11 @@ interface Tag {
   name: string;
 }
 
+interface Brand {
+  id: string;
+  name: string;
+}
+
 export function ProductsPage() {
   const baseUrl = "https://www.wowpetspalace.com/test/";
   const itemsPerPage = 10;
@@ -40,14 +45,16 @@ export function ProductsPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
 
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [minPrice, setMinPrice] = useState<number | null>(null);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
 
   const [loading, setLoading] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
-  
+
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
 
   /* ---------------- Image Helper ---------------- */
   const getProductCardImage = (item: any) => {
@@ -68,11 +75,12 @@ export function ProductsPage() {
       };
 
       // Category filter
-      if (selectedCategory) {
-        const selected = categories.find(
-          (cat) => cat.title === selectedCategory,
-        );
-        if (selected) params.cat_id = selected.id;
+      if (selectedCategories.length > 0) {
+        const ids = categories
+          .filter((cat) => selectedCategories.includes(cat.title))
+          .map((cat) => cat.id);
+
+        params["cat_id[]"] = ids;
       }
 
       // Price filter
@@ -92,23 +100,22 @@ export function ProductsPage() {
         { params },
       );
 
-      const mapped = data.data.map((item: any) => ({
-        id: item.id,
+      const mapped: Product[] = data.data.map((item: any) => ({
+        id: String(item.id),
         slug: item.slug,
         name: item.name,
         featured_image: getProductCardImage(item),
         original_price: item.original_price,
         discountPercentage: item.discountPercentage ?? 0,
         rating: item.overall_rating ?? 0,
-        reviewsCount: item.reviewsCount ?? 0,
+        reviewsCount: 0,
         categoryTitle: item.categoryTitle,
       }));
 
       setProducts(mapped);
-
       // If backend returns total count, use it
       if (data.total) {
-        setTotalPages(Math.ceil(data.total / itemsPerPage));
+        setTotalPages(totalPages);
       }
     } catch (error) {
       console.error("Error fetching products", error);
@@ -159,21 +166,12 @@ export function ProductsPage() {
   /* ---------------- Reset Page When Filters Change ---------------- */
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedCategory, minPrice, maxPrice, selectedTags, searchQuery]);
+  }, [selectedCategories, minPrice, maxPrice, selectedTags, searchQuery]);
 
   /* ---------------- Fetch Products When Dependencies Change ---------------- */
   useEffect(() => {
     fetchProducts();
-  }, [
-    currentPage,
-    selectedCategory,
-    minPrice,
-    maxPrice,
-    selectedTags,
-    searchQuery,
-    categories,
-  ]);
-
+  }, [currentPage]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -217,31 +215,46 @@ export function ProductsPage() {
                   <ul className="space-y-2">
                     <li>
                       <button
-                        onClick={() => setSelectedCategory(null)}
+                        onClick={() => setSelectedCategories([])}
                         className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition
-      ${
-        selectedCategory === null
-          ? "bg-primary text-primary-foreground"
-          : "hover:bg-muted"
-      }`}
+                          ${
+                            selectedCategories.length === 0
+                              ? "bg-primary text-primary-foreground"
+                              : "hover:bg-muted"
+                          }`}
                       >
                         All Categories
                       </button>
                     </li>
 
                     {categories.map((category) => {
-                      const isActive = selectedCategory === category.title;
+                      const isActive = selectedCategories.includes(
+                        category.title,
+                      );
 
                       return (
                         <li key={category.id}>
                           <button
-                            onClick={() => setSelectedCategory(category.title)}
+                            onClick={() => {
+                              if (selectedCategories.includes(category.title)) {
+                                setSelectedCategories(
+                                  selectedCategories.filter(
+                                    (c) => c !== category.title,
+                                  ),
+                                );
+                              } else {
+                                setSelectedCategories([
+                                  ...selectedCategories,
+                                  category.title,
+                                ]);
+                              }
+                            }}
                             className={`w-full flex justify-between px-3 py-2 rounded-md text-sm font-medium transition
-          ${
-            isActive
-              ? "bg-primary text-primary-foreground shadow-sm"
-              : "hover:bg-muted"
-          }`}
+                              ${
+                                isActive
+                                  ? "bg-primary text-primary-foreground shadow-sm"
+                                  : "hover:bg-muted"
+                              }`}
                           >
                             <span>{category.title}</span>
                             <span
@@ -318,11 +331,11 @@ export function ProductsPage() {
                           }
                         }}
                         className={`px-3 py-1 rounded-full text-xs font-medium border transition
-        ${
-          isActive
-            ? "bg-primary text-primary-foreground border-primary"
-            : "hover:bg-muted"
-        }`}
+                          ${
+                            isActive
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "hover:bg-muted"
+                          }`}
                       >
                         {tag.name}
                       </button>
@@ -330,6 +343,29 @@ export function ProductsPage() {
                   })}
                 </div>
               </div>
+              <Button
+                className="w-full"
+                onClick={() => {
+                  setCurrentPage(1);
+                  fetchProducts();
+                }}
+              >
+                Apply Filters
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  setSelectedCategories([]);
+                  setSelectedBrand(null);
+                  setMinPrice(null);
+                  setMaxPrice(null);
+                  setSelectedTags([]);
+                  setSearchQuery("");
+                }}
+              >
+                Reset Filters
+              </Button>
             </div>
           </aside>
 

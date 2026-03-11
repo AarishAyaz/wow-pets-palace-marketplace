@@ -380,7 +380,19 @@ export function ProductDetailsPage() {
               <h1 className="text-2xl lg:text-4xl font-bold text-foreground leading-tight">
                 {product.name}
               </h1>
+              <div className="flex items-center gap-3 mt-2">
+  {product.brand?.logo && (
+    <img
+      src={`https://www.wowpetspalace.com/test/${product.brand.logo}`}
+      alt={product.brand.name}
+      className="h-8 w-auto object-contain"
+    />
+  )}
 
+  <span className="text-sm text-muted-foreground">
+     <span className="font-medium text-foreground">{product.brand?.name}</span>
+  </span>
+</div>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1.5">
                   <div className="flex">
