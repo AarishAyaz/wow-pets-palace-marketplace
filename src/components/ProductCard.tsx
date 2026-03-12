@@ -39,7 +39,7 @@ export function ProductCard({
   return (
     <Card
   onClick={() => navigate(`/product/${slug}`)}
-  className="group flex flex-col h-full overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300"
+  className="group flex flex-col h-full overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
 >
   {/* Image */}
 <div className="relative h-70 w-full">
@@ -86,7 +86,7 @@ export function ProductCard({
       </div>
       {reviewsCount !== null && (
         <span className="text-xs text-muted-foreground hidden sm:inline">
-          {rating} ({reviewsCount})
+          ({rating})
         </span>
       )}
     </div>

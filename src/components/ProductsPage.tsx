@@ -30,13 +30,13 @@ interface Tag {
 }
 
 interface Brand {
-  id: string;
+  id: number;
   name: string;
 }
 
 export function ProductsPage() {
   const baseUrl = "https://www.wowpetspalace.com/test/";
-  const itemsPerPage = 10;
+  const itemsPerPage = 8;
 
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -54,8 +54,7 @@ export function ProductsPage() {
   const [totalPages, setTotalPages] = useState(1);
 
   const [brands, setBrands] = useState<Brand[]>([]);
-  const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
-
+const [selectedBrands, setSelectedBrands] = useState<number[]>([]);
   /* ---------------- Image Helper ---------------- */
   const getProductCardImage = (item: any) => {
     if (item.featured_image) return `${baseUrl}${item.featured_image}`;
@@ -91,12 +90,12 @@ export function ProductsPage() {
       if (selectedTags.length > 0) {
         params["search_tag[]"] = selectedTags;
       }
-
+if (selectedBrands.length > 0) params["brand_id[]"] = selectedBrands;
       // Search filter
       if (searchQuery) params.search = searchQuery;
 
       const { data } = await axios.get(
-        "https://www.wowpetspalace.com/test/product/getProducts/1",
+        `https://www.wowpetspalace.com/test/product/getProducts/${currentPage}`,
         { params },
       );
 
@@ -114,15 +113,31 @@ export function ProductsPage() {
 
       setProducts(mapped);
       // If backend returns total count, use it
-      if (data.total) {
-        setTotalPages(totalPages);
-      }
+   if (data.total) {
+  setTotalPages(Math.ceil(data.total / itemsPerPage));
+}
     } catch (error) {
       console.error("Error fetching products", error);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(()=>{
+    const fetchBrands = async ()=>{
+      try {
+        const {data} = await axios.get("https://www.wowpetspalace.com/test/brands/getBrands")
+        const mapped = data.data.map((b:any)=>({
+          id: Number(b.id),
+          name: b.name,
+        }))
+        setBrands(mapped);
+      } catch (error) {
+        console.error("Error fetching brands", error);
+      }
+    }
+    fetchBrands();
+  }, []);
 
   /* ---------------- Fetch Categories ---------------- */
   useEffect(() => {
@@ -166,7 +181,7 @@ export function ProductsPage() {
   /* ---------------- Reset Page When Filters Change ---------------- */
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedCategories, minPrice, maxPrice, selectedTags, searchQuery]);
+  }, [selectedCategories, minPrice, maxPrice, selectedTags, searchQuery, selectedBrands]);
 
   /* ---------------- Fetch Products When Dependencies Change ---------------- */
   useEffect(() => {
@@ -343,6 +358,38 @@ export function ProductsPage() {
                   })}
                 </div>
               </div>
+             <div>
+  <h4 className="font-semibold text-sm mb-2">Filter by Brand</h4>
+
+  <ScrollArea className="h-[160px] pr-2">
+    <div className="grid grid-cols-3 gap-2">
+      {brands.map((brand) => {
+        const isActive = selectedBrands.includes(brand.id);
+
+        return (
+          <button
+            key={brand.id}
+            onClick={() => {
+              if (isActive) {
+                setSelectedBrands(selectedBrands.filter((b) => b !== brand.id));
+              } else {
+                setSelectedBrands([...selectedBrands, brand.id]);
+              }
+            }}
+            className={`px-3 py-1 rounded-full text-xs font-medium border transition
+              ${
+                isActive
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "hover:bg-muted"
+              }`}
+          >
+            {brand.name}
+          </button>
+        );
+      })}
+    </div>
+  </ScrollArea>
+</div>
               <Button
                 className="w-full"
                 onClick={() => {
@@ -357,7 +404,7 @@ export function ProductsPage() {
                 className="w-full"
                 onClick={() => {
                   setSelectedCategories([]);
-                  setSelectedBrand(null);
+                  setSelectedBrands([]);
                   setMinPrice(null);
                   setMaxPrice(null);
                   setSelectedTags([]);
@@ -374,7 +421,7 @@ export function ProductsPage() {
             {loading ? (
               <p>Loading products...</p>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {products.map((product) => (
                   <ProductCard
                     key={product.id}
