@@ -2,9 +2,11 @@ import { Bell, ShoppingCart, User, Heart } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { useNavigate } from 'react-router-dom';
+import { useCart} from "@/context/CartContext";
 
 export function Header() {
   const navigate = useNavigate();
+  const { getTotalItems } = useCart();
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 shadow-sm">
       <div className="container mx-auto px-4">
@@ -47,11 +49,13 @@ export function Header() {
                 3
               </Badge>
             </Button>
-            <Button variant="ghost" size="icon" className="relative">
+            <Button
+            onClick={()=>navigate("/cart")}
+            variant="ghost" size="icon" className="relative">
               <ShoppingCart className="w-5 h-5" />
               <Badge className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center p-0 bg-secondary text-xs">
-                2
-              </Badge>
+  {getTotalItems()}
+</Badge>
             </Button>
             <Button variant="ghost" size="icon" onClick={()=>navigate("/login")}>
               <User className="w-5 h-5" />

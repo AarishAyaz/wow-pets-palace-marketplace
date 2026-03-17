@@ -17,6 +17,7 @@ import { Badge } from "./ui/badge";
 import { Card, CardContent } from "./ui/card";
 import { Separator } from "./ui/separator";
 import { ProductCard } from "./ProductCard";
+import { useCart } from "@/context/CartContext";
 
 // Inject keyframes once
 const shineKeyframes = `
@@ -217,6 +218,7 @@ export function ProductDetailsPage() {
     (review) => review.product_id === product.id,
   );
 
+  const {addToCart} = useCart();
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-6 lg:py-12">
@@ -519,6 +521,15 @@ export function ProductDetailsPage() {
 
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
               <Button
+               onClick={()=>
+      addToCart({
+        id: product.id,
+        name: product.name,
+        price: Number(discountedPrice),
+        image: selectedImage,
+        quantity: quantity,
+      })
+    }
                 size="lg"
                 className="flex-1 gap-2 h-12 text-base font-semibold"
               >

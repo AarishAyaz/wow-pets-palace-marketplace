@@ -17,6 +17,7 @@ import { ProductsPage } from "./components/ProductsPage";
 import { ProductDetailsPage } from "./components/ProductDetails";
 import { LoginPage } from "./components/LoginPage";
 import { SignupPage } from "./components/SignupPage";
+import CartPage from "./components/CartPage";
 
 function Home() {
   return (
@@ -61,6 +62,7 @@ export default function App() {
           <Route path="/product/:slug" element={<ProductDetailsPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/cart" element={<CartPage />} />
         </Routes>
       </Layout>
     </Router>

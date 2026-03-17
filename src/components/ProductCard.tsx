@@ -4,6 +4,7 @@ import { Button } from "./ui/button";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { ShoppingCart, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import {useCart} from "@/context/CartContext";
 
 interface ProductCardProps {
   id: number | string;
@@ -35,6 +36,8 @@ export function ProductCard({
     discountPercentage > 0
       ? +(price * (1 - discountPercentage / 100)).toFixed(2)
       : price;
+
+      const { addToCart } = useCart();
 
   return (
     <Card
@@ -111,7 +114,17 @@ export function ProductCard({
 </div>
 
     {/* Add to Cart */}
-    <Button className="mt-auto w-full bg-gradient-to-r from-primary to-primary/80 text-xs lg:text-sm flex items-center  justify-center gap-1">
+    <Button 
+    onClick={()=>
+      addToCart({
+        id: slug,
+        name,
+        price: discountedPrice,
+        image,
+        quantity: 1,
+      })
+    }
+    className="mt-auto w-full bg-gradient-to-r from-primary to-primary/80 text-xs lg:text-sm flex items-center  justify-center gap-1">
       <ShoppingCart className="w-4 h-4 group-hover:scale-110 transition-transform" />
       Add to Cart
     </Button>
