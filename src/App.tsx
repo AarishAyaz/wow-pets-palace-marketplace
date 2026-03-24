@@ -18,6 +18,7 @@ import { ProductDetailsPage } from "./components/ProductDetails";
 import { LoginPage } from "./components/LoginPage";
 import { SignupPage } from "./components/SignupPage";
 import CartPage from "./components/CartPage";
+import { CartProvider } from "./context/CartContext";
 
 function Home() {
   return (
@@ -55,6 +56,7 @@ function Layout({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <Router basename="/wowpets">
+      <CartProvider>
       <Layout>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -65,6 +67,7 @@ export default function App() {
           <Route path="/cart" element={<CartPage />} />
         </Routes>
       </Layout>
+      </CartProvider>
     </Router>
   );
 }

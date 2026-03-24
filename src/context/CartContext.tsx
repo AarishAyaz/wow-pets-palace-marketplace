@@ -27,8 +27,10 @@ export const useCart = () => {
 };
 
 export const CartProvider = ({ children }: any) => {
-  const [cart, setCart] = useState<CartItem[]>([]);
-
+const [cart, setCart] = useState<CartItem[]>(() => {
+  const stored = localStorage.getItem("cart");
+  return stored ? JSON.parse(stored) : [];
+});
   // Load from localStorage
   useEffect(() => {
     const stored = localStorage.getItem("cart");
@@ -40,21 +42,21 @@ export const CartProvider = ({ children }: any) => {
     localStorage.setItem("cart", JSON.stringify(cart));
   }, [cart]);
 
-  const addToCart = (item: CartItem) => {
-    setCart((prev) => {
-      const existing = prev.find((p) => p.id === item.id);
+const addToCart = (item: CartItem) => {
+  setCart((prev) => {
+    const existing = prev.find((p) => p.id === item.id);
 
-      if (existing) {
-        return prev.map((p) =>
-          p.id === item.id
-            ? { ...p, quantity: p.quantity + 1 }
-            : p
-        );
-      }
+    if (existing) {
+      return prev.map((p) =>
+        p.id === item.id
+          ? { ...p, quantity: p.quantity + item.quantity }
+          : p
+      );
+    }
 
-      return [...prev, { ...item, quantity: 1 }];
-    });
-  };
+    return [...prev, item]; // ✅ keep original quantity
+  });
+};
 
   const removeFromCart = (id: string) => {
     setCart((prev) => prev.filter((p) => p.id !== id));
