@@ -1,5 +1,7 @@
 import { useCart } from "@/context/CartContext";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
 export default function CartPage() {
   const {
@@ -12,7 +14,16 @@ export default function CartPage() {
   if (cart.length === 0) {
     return <div className="p-10 text-center">Your cart is empty</div>;
   }
+  const navigate = useNavigate();
+  const {isAuthenticated} = useAuth();
 
+  const handleCheckout = () =>{
+    if(!isAuthenticated){
+navigate("/login?redirect=/checkout");
+      return;
+    }
+    navigate("/checkout");
+  }
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Shopping Cart</h1>
@@ -58,7 +69,7 @@ export default function CartPage() {
           Total: $ {getTotalPrice()}
         </h2>
 
-        <Button className="mt-4">Checkout</Button>
+        <Button className="mt-4" onClick={handleCheckout}>Checkout</Button>
       </div>
     </div>
   );

@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader } from "./ui/card";
 import { Separator } from "./ui/separator";
 import { Eye, EyeOff, ArrowRight } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 export function LoginPage() {
   const [email, setEmail] = useState("");
@@ -12,10 +12,16 @@ export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+
+  const redirect = params.get("redirect") || "/";
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+
+    navigate(redirect);
 
     setTimeout(() => {
       setIsLoading(false);

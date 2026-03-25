@@ -19,6 +19,9 @@ import { LoginPage } from "./components/LoginPage";
 import { SignupPage } from "./components/SignupPage";
 import CartPage from "./components/CartPage";
 import { CartProvider } from "./context/CartContext";
+import ProtectedRoute from "./components/ProtectedRoute";
+import CheckoutPage from "./components/CheckoutPage";
+import { AuthProvider } from "./context/AuthContext";
 
 function Home() {
   return (
@@ -56,7 +59,8 @@ function Layout({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <Router basename="/wowpets">
-      <CartProvider>
+      <AuthProvider>
+              <CartProvider>
       <Layout>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -65,9 +69,16 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={
+            <ProtectedRoute>
+              <CheckoutPage />
+            </ProtectedRoute>
+          } />
         </Routes>
       </Layout>
       </CartProvider>
+      </AuthProvider>
+
     </Router>
   );
 }
