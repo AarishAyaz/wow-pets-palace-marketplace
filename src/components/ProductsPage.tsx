@@ -55,6 +55,15 @@ export function ProductsPage() {
 
   const [brands, setBrands] = useState<Brand[]>([]);
 const [selectedBrands, setSelectedBrands] = useState<number[]>([]);
+
+  const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
+
+  useEffect(()=>{
+    const timer = setTimeout(()=>{
+      setDebouncedSearch(searchQuery);
+    }, 400);
+    return ()=> clearTimeout(timer);
+  }, [searchQuery]);
   /* ---------------- Image Helper ---------------- */
   const getProductCardImage = (item: any) => {
     if (item.featured_image) return `${baseUrl}${item.featured_image}`;
@@ -92,7 +101,6 @@ const [selectedBrands, setSelectedBrands] = useState<number[]>([]);
       }
 if (selectedBrands.length > 0) params["brand_id[]"] = selectedBrands;
       // Search filter
-      if (searchQuery) params.search = searchQuery;
 
       const { data } = await axios.get(
         `https://www.wowpetspalace.com/test/product/getProducts/${currentPage}`,
@@ -185,8 +193,42 @@ if (selectedBrands.length > 0) params["brand_id[]"] = selectedBrands;
 
   /* ---------------- Fetch Products When Dependencies Change ---------------- */
   useEffect(() => {
-    fetchProducts();
-  }, [currentPage]);
+    if (debouncedSearch.trim()){
+      searchProductsAPI();
+    } else{
+      fetchProducts();
+    };
+  }, [debouncedSearch,currentPage]);
+
+  const searchProductsAPI = async () => {
+    try {
+      setLoading(true);
+
+      const {data} = await axios.get("https://www.wowpetspalace.com/test/product/searchProducts",{
+        params: {
+          query : debouncedSearch,
+          limit: 20,
+        },
+      });
+      const mapped: Product[] = data.data.map((item:any)=>({
+        id: String(item.id),
+        slug: item.slug,
+        name: item.name,
+        featured_image: getProductCardImage(item),
+        original_price: item.original_price,
+        discountPercentage: item.discountPercentage ?? 0,
+        rating: item.overall_rating ?? 0,
+        reviewsCount: 9,
+        categoryTitle: item.categoryTitle,
+      }));
+      setProducts(mapped);
+      setTotalPages(1);
+    } catch (error) {
+      console.error("Search Error", error);
+    } finally{
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -419,7 +461,7 @@ if (selectedBrands.length > 0) params["brand_id[]"] = selectedBrands;
           {/* Products */}
           <section className="flex-1">
             {loading ? (
-              <p>Loading products...</p>
+              <p>{debouncedSearch ? "Searching products..." : "Loading products..."}</p>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {products.map((product) => (
@@ -439,27 +481,34 @@ if (selectedBrands.length > 0) params["brand_id[]"] = selectedBrands;
                 ))}
               </div>
             )}
+            {!loading && products.length === 0 && (
+  <p className="text-center text-muted-foreground">
+    No products found for "{debouncedSearch}"
+  </p>
+)}
 
             {/* Pagination */}
-            <div className="flex justify-center gap-4 mt-8">
-              <Button
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((prev) => prev - 1)}
-              >
-                Previous
-              </Button>
+           {!debouncedSearch && (
+  <div className="flex justify-center gap-4 mt-8">
+    <Button
+      disabled={currentPage === 1}
+      onClick={() => setCurrentPage((prev) => prev - 1)}
+    >
+      Previous
+    </Button>
 
-              <span className="flex items-center">
-                Page {currentPage} of {totalPages}
-              </span>
+    <span className="flex items-center">
+      Page {currentPage} of {totalPages}
+    </span>
 
-              <Button
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage((prev) => prev + 1)}
-              >
-                Next
-              </Button>
-            </div>
+    <Button
+      disabled={currentPage === totalPages}
+      onClick={() => setCurrentPage((prev) => prev + 1)}
+    >
+      Next
+    </Button>
+  </div>
+)}
           </section>
         </div>
       </main>
