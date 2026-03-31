@@ -5,34 +5,88 @@ import { Card, CardContent, CardHeader } from "./ui/card";
 import { Separator } from "./ui/separator";
 import { Eye, EyeOff, ArrowRight, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { useAuth } from "@/context/AuthContext";
+import CryptoJS from "crypto-js";
 
 export function SignupPage() {
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const navigate = useNavigate();
+  const [error, setError] = useState("");
+
+const {setUser} = useAuth();
+const SECRET_KEY = "ZAQ123!12@assddfhex";
+
+const encryptPassword = (password: string) => {
+  return CryptoJS.AES.encrypt(password, SECRET_KEY).toString();
+};
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
     confirmPassword: "",
   });
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
-  const navigate = useNavigate();
+  
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
+const handleSignup = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  if (formData.password !== formData.confirmPassword) {
+    setError("Passwords do not match");
+    return;
+  }
+
+  try {
     setIsLoading(true);
+    setError("");
 
-    // Add your signup logic here
-    console.log("Creating account", formData);
+    const encryptedPassword = encryptPassword(formData.password);
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      // navigate("/dashboard"); // Uncomment when ready
-    }, 1000);
-  };
+    const response = await axios.post(
+      "https://www.wowpetspalace.com/test/authUser/registeruser",
+      {
+        name: formData.name,
+        email: formData.email,
+        password: encryptedPassword,
+        firebase_token: "123456789",
+        devicetype: "WEB",
+      },// fix the cart button, add firebase token function, encrypt login password, fix the design of the product card
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
+    console.log("FULL RESPONSE:", response.data);
+
+    if (response.data?.status === true) {
+      // ✅ optional: store user if API returns it
+      if (response.data.user) {
+        setUser(response.data.user);
+      }
+
+      navigate("/login");
+    } else {
+      setError(response.data?.message || "Signup failed");
+    }
+  } catch (error: any) {
+    console.error("Signup Error:", error);
+
+    if (error.response) {
+      console.log("Backend Error:", error.response.data);
+      setError(error.response.data?.message || "Unauthorized / Invalid data");
+    } else {
+      setError("Network error. Check internet or CORS.");
+    }
+  } finally {
+    setIsLoading(false);
+  }
+}
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };

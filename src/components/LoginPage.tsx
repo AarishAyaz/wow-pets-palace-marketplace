@@ -5,6 +5,9 @@ import { Card, CardContent, CardHeader } from "./ui/card";
 import { Separator } from "./ui/separator";
 import { Eye, EyeOff, ArrowRight } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import axios from "axios";
+import { useAuth } from "@/context/AuthContext";
+import CryptoJS from "crypto-js";
 
 export function LoginPage() {
   const [email, setEmail] = useState("");
@@ -13,19 +16,56 @@ export function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const [params] = useSearchParams();
-
+  const {setUser} = useAuth();
   const redirect = params.get("redirect") || "/";
+  const SECRET_KEY = "ZAQ123!12@assddfhex";
 
-
+  const encryptPassword = (password: string) =>{
+    return CryptoJS.AES.encrypt(password, SECRET_KEY).toString();
+  }
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    try {
+      const encryptedPassword = encryptPassword(password);
+      console.log("Encrypted Password:", encryptedPassword);
 
-    navigate(redirect);
+      const {data} = await axios.post(
+        "https://www.wowpetspalace.com/test/authuser/signin",
+        {
+          email,
+          password: encryptedPassword,
+          firebase_token: "123456789",
+          devicetype: "WEB",
+        },
+        {headers:{
+          "Content-Type": "application/json",
+        },
+      }
+      );
 
-    setTimeout(() => {
+      console.log("Login Response:", data);
+
+      const userData = data.user || data.data || data;
+
+      localStorage.setItem("user", JSON.stringify(userData));
+
+      if(data.token){
+        localStorage.setItem("token", data.token);
+      }
+       setUser(userData);
+
+      navigate(redirect);
+    } catch (error: any) {
+      console.error("Login Error:", error);
+
+      alert(
+        error?.response?.data?.message || "Invalid email or password"
+      )
+    } finally{
       setIsLoading(false);
-    }, 1000);
+    }
+
   };
 
   return (

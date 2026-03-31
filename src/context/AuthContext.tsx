@@ -8,6 +8,7 @@ interface user {
 interface AuthContextType {
   user: user | null;
   isAuthenticated: boolean;
+  setUser: (user: user | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -31,6 +32,7 @@ export const AuthProvider = ({ children }: any) => {
       value={{
         user,
         isAuthenticated: !!user,
+        setUser,
       }}
     >
       {children}
