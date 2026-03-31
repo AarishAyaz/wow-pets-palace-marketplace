@@ -3,10 +3,18 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { useCart} from "@/context/CartContext";
+import { useAuth } from '@/context/AuthContext';
 
 export function Header() {
   const navigate = useNavigate();
   const { getTotalItems } = useCart();
+  const {user, isAuthenticated} = useAuth();
+
+  const displayName = user?.firstName || user?.email ||"User";
+
+  const avatarUrl = user?.user_profile_photo && user.user_profile_photo !== "default.png"
+  ? `/uploads/${user.user_profile_photo}`
+  : null;
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 shadow-sm">
       <div className="container mx-auto px-4">
@@ -57,9 +65,30 @@ export function Header() {
   {getTotalItems()}
 </Badge>
             </Button>
-            <Button variant="ghost" size="icon" onClick={()=>navigate("/login")}>
+            {/* <Button variant="ghost" size="icon" onClick={()=>navigate("/login")}>
               <User className="w-5 h-5" />
-            </Button>
+            </Button> */}
+
+            {isAuthenticated && user ?(
+              <div className='flex items-center gap02 cursor-pointer' >
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="User Avatar" className='w-8 h-8 rounded-full object-cover' />
+                ) : ( 
+                  <div className='w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-semibold'>
+                    {displayName.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <span className='hidden md:inline font-medium'>{displayName}</span>
+              </div>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate("/login")}
+              >
+                <User className="w-5 h-5" />
+              </Button>
+            )}
           </div>
         </div>
       </div>

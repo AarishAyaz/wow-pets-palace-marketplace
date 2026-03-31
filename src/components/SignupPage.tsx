@@ -25,7 +25,8 @@ const encryptPassword = (password: string) => {
   return CryptoJS.AES.encrypt(password, SECRET_KEY).toString();
 };
   const [formData, setFormData] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -49,7 +50,8 @@ const handleSignup = async (e: React.FormEvent) => {
     const response = await axios.post(
       "https://www.wowpetspalace.com/test/authUser/registeruser",
       {
-        name: formData.name,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
         email: formData.email,
         password: encryptedPassword,
         firebase_token: "123456789",
@@ -129,19 +131,38 @@ const handleSignup = async (e: React.FormEvent) => {
             <form onSubmit={handleSignup} className="space-y-4">
               {/* Full Name Input */}
               <div className="space-y-2">
-                <label htmlFor="name" className="text-sm font-semibold text-foreground">
-                  Full Name
+                <label htmlFor="firstName" className="text-sm font-semibold text-foreground">
+                  First Name
                 </label>
                 <div className="relative">
                   <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
                     {/* <User className="h-4 w-4 text-muted-foreground/60" /> */}
                   </div>
                   <Input
-                    id="name"
+                    id="firstName"
                     type="text"
-                    placeholder="John Doe"
-                    value={formData.name}
-                    onChange={(e) => handleInputChange("name", e.target.value)}
+                    placeholder="John"
+                    value={formData.firstName}
+                    onChange={(e) => handleInputChange("firstName", e.target.value)}
+                    className="pl-10 h-11 transition-all"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="lastName" className="text-sm font-semibold text-foreground">
+                  Last Name
+                </label>
+                <div className="relative">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                    {/* <User className="h-4 w-4 text-muted-foreground/60" /> */}
+                  </div>
+                  <Input
+                    id="lastName"
+                    type="text"
+                    placeholder="Doe"
+                    value={formData.lastName}
+                    onChange={(e) => handleInputChange("lastName", e.target.value)}
                     className="pl-10 h-11 transition-all"
                     required
                   />
