@@ -4,11 +4,38 @@ import { Badge } from './ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { useCart} from "@/context/CartContext";
 import { useAuth } from '@/context/AuthContext';
+import { useState, useRef, useEffect } from 'react';
 
 export function Header() {
   const navigate = useNavigate();
   const { getTotalItems } = useCart();
-  const {user, isAuthenticated} = useAuth();
+  const {user, isAuthenticated, setUser} = useAuth();
+
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  //close dropdown when clicking outside
+
+  useEffect(()=>{
+    function handleClickOutside(event: MouseEvent){
+      if(
+        dropdownRef.current &&
+        !dropdownRef.current?.contains(event.target as Node)
+      ){
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setUser(null);
+    
+  }
 
   const displayName = user?.firstName || user?.email ||"User";
 
@@ -69,16 +96,56 @@ export function Header() {
               <User className="w-5 h-5" />
             </Button> */}
 
-            {isAuthenticated && user ?(
-              <div className='flex items-center gap02 cursor-pointer' >
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt="User Avatar" className='w-8 h-8 rounded-full object-cover' />
-                ) : ( 
-                  <div className='w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-semibold'>
-                    {displayName.charAt(0).toUpperCase()}
+              {/* User Section */}
+            {isAuthenticated && user ? (
+              <div className="relative" ref={dropdownRef}>
+                
+                {/* Avatar */}
+                <div
+                  className="flex items-center gap-2 cursor-pointer"
+                  onClick={() => setOpen(!open)}
+                >
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center">
+                      {displayName.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+
+                {/* Dropdown */}
+                {open && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg py-2 z-50">
+                    
+                    <div className="px-4 py-2 border-b">
+                      <p className="text-sm font-medium">{displayName}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {user.email}
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        navigate("/profile");
+                        setOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-muted"
+                    >
+                      Profile
+                    </button>
+
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-muted"
+                    >
+                      Logout
+                    </button>
                   </div>
                 )}
-                <span className='hidden md:inline font-medium'>{displayName}</span>
               </div>
             ) : (
               <Button
