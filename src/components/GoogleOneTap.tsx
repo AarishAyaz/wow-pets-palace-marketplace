@@ -19,17 +19,30 @@ export default function GoogleOneTap() {
     if (location.pathname === "/login" || location.pathname === "/signup") return;
 
     const initializeGoogle = () => {
-      if (!window.google) return;
+  if (!window.google) return;
 
-      window.google.accounts.id.initialize({
-        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-        callback: handleCredentialResponse,
-        auto_select: false,
-        cancel_on_tap_outside: true,
-      });
+  if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
+    console.error("Google Client ID missing!");
+    return;
+  }
 
-      window.google.accounts.id.prompt();
-    };
+  window.google.accounts.id.initialize({
+    client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+    callback: handleCredentialResponse,
+    auto_select: false,
+    cancel_on_tap_outside: false,
+    context: "signin", // 👈 improves UX
+  });
+
+  window.google.accounts.id.prompt((notification: any) => {
+    if (notification.isNotDisplayed()) {
+      console.log("One Tap not displayed:", notification.getNotDisplayedReason());
+    }
+    if (notification.isSkippedMoment()) {
+      console.log("One Tap skipped:", notification.getSkippedReason());
+    }
+  });
+};
 
     const handleCredentialResponse = async (response: any) => {
       try {

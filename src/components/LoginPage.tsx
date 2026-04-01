@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader } from "./ui/card";
@@ -68,6 +68,65 @@ export function LoginPage() {
 
   };
 
+useEffect(() => {
+  if (!window.google) {
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    script.onload = initializeGoogle;
+    document.body.appendChild(script);
+  } else {
+    initializeGoogle();
+  }
+}, []);
+const handleGoogleResponse = async (response: any) => {
+  try {
+    const res = await axios.post(
+      `${import.meta.env.VITE_APP_BASE_URL}/authUser/auth/google`,
+      { token: response.credential },
+      { headers: { "Content-Type": "application/json" } }
+    );
+
+    const userData = res.data?.data;
+
+    localStorage.setItem("token", userData.auth_token);
+    localStorage.setItem("user", JSON.stringify(userData));
+
+    setUser(userData);
+    navigate(redirect);
+
+  } catch (error) {
+    console.error("Google Sign-In Failed", error);
+    alert("Google Sign-In Failed");
+  }
+};
+ const initializeGoogle = () => {
+  if (!window.google) return;
+
+  if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
+    console.error("Google Client ID missing!");
+    return;
+  }
+
+  window.google.accounts.id.initialize({
+    client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+    callback: handleGoogleResponse,
+  });
+
+  // Optional One Tap
+  window.google.accounts.id.prompt();
+
+  // Render button (BEST PRACTICE)
+  window.google.accounts.id.renderButton(
+    document.getElementById("googleBtn"),
+    {
+      theme: "outline",
+      size: "large",
+      width: "100%",
+    }
+  );
+};
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-md">
@@ -207,12 +266,18 @@ export function LoginPage() {
 
             {/* Social */}
             {/* Social Signup Buttons */}
-            <div className="grid gap-3">
+            <div id="googleBtn" className="w-full flex justify-center">
               <Button
                 type="button"
                 variant="outline"
                 className="h-11 font-medium"
-                onClick={() => console.log("Google signup")}
+                onClick={() =>{
+                  if(!window.google){
+                    alert("Google not loaded yet!");
+                    return;
+                  } 
+                  window.google.accounts.id.prompt();
+                }}
               >
                 <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24">
                   <path
