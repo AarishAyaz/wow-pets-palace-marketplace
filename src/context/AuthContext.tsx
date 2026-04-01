@@ -1,10 +1,14 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
-interface user {
-  id: string;
+export interface user {
+  id?: number;
   email: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  user_profile_photo?: string | null;
+  phoneNumber?: string | null;
+  status?: number;
 }
-
 interface AuthContextType {
   user: user | null;
   isAuthenticated: boolean;

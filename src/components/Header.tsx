@@ -29,7 +29,7 @@ export function Header() {
 
           {/* Navigation - Hidden on mobile */}
           <nav className="hidden md:flex items-center space-x-8">
-            <a href="#" className="text-foreground hover:text-primary transition-colors">
+            <a href="shop" className="text-foreground hover:text-primary transition-colors">
               Explore Products
             </a>
             <a href="#" className="text-foreground hover:text-primary transition-colors">
