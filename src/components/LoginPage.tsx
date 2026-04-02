@@ -266,7 +266,8 @@ const handleGoogleResponse = async (response: any) => {
 
             {/* Social */}
             {/* Social Signup Buttons */}
-            <div id="googleBtn" className="w-full flex justify-center">
+            <div className="grid gap-3">
+            <div id="googleBtn">
               <Button
                 type="button"
                 variant="outline"
@@ -300,6 +301,7 @@ const handleGoogleResponse = async (response: any) => {
                 Google
               </Button>
 
+            </div>
             </div>
           </CardContent>
         </Card>
