@@ -28,6 +28,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import CheckoutPage from "./components/CheckoutPage";
 import { AuthProvider } from "./context/AuthContext";
 import GoogleOneTap from "./components/GoogleOneTap";
+import ProfilePage from "./components/Profile";
 
 function Home() {
   return (
@@ -77,6 +78,7 @@ export default function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
               <Route path="/cart" element={<CartPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
               <Route
                 path="/checkout"
                 element={

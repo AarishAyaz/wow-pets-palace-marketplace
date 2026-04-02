@@ -56,7 +56,6 @@ export function SignupPage() {
       setError("");
 
       const encryptedPassword = encryptPassword(formData.password);
-
       const response = await axios.post(
         "https://www.wowpetspalace.com/test/authUser/registeruser",
         {
@@ -73,6 +72,10 @@ export function SignupPage() {
           },
         },
       );
+      const userData =
+        response.data?.user || response.data?.data || response.data;
+      localStorage.setItem("user", JSON.stringify(userData));
+      navigate("/");
 
       console.log("FULL RESPONSE:", response.data);
 
@@ -81,8 +84,6 @@ export function SignupPage() {
         if (response.data.user) {
           setUser(response.data.user);
         }
-
-        navigate("/login");
       } else {
         setError(response.data?.message || "Signup failed");
       }
