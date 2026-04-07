@@ -166,15 +166,15 @@ export default function ProfilePage() {
                 <h3 className="font-semibold text-lg">Personal Information</h3>
               </CardHeader>
               <CardContent className="grid md:grid-cols-2 gap-6">
-                <Field label="First Name" icon={User} value={profile.firstName}
+                <Field label="First Name"  value={profile.firstName}
                   onChange={(e: any) => setProfile(p => ({ ...p, firstName: e.target.value }))} />
 
-                <Field label="Last Name" icon={User} value={profile.lastName}
+                <Field label="Last Name"  value={profile.lastName}
                   onChange={(e: any) => setProfile(p => ({ ...p, lastName: e.target.value }))} />
 
-                <Field label="Email" icon={Mail} value={profile.email} disabled />
+                <Field label="Email"  value={profile.email} disabled />
 
-                <Field label="Phone" icon={Phone} value={profile.phone}
+                <Field label="Phone"  value={profile.phone}
                   onChange={(e: any) => setProfile(p => ({ ...p, phone: e.target.value }))} />
 
                 <div className="md:col-span-2 flex justify-end gap-3">

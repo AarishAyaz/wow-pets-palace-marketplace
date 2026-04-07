@@ -1,0 +1,926 @@
+import {
+  User,
+  Camera,
+  Edit,
+  Save,
+  MapPin,
+  Phone,
+  Mail,
+  Lock,
+  Package,
+  Heart,
+  LogOut,
+  Shield,
+  Home,
+  ChevronRight,
+  Check,
+  Eye,
+  EyeOff,
+  ArrowLeft,
+  Settings,
+  Clock,
+  Truck,
+  CheckCircle2
+} from 'lucide-react';
+import { Header } from './Header';
+import { Footer } from './Footer';
+import { Button } from './ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Separator } from './ui/separator';
+import { Badge } from './ui/badge';
+import { Checkbox } from './ui/checkbox';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter
+} from './ui/dialog';
+import { ImageWithFallback } from './figma/ImageWithFallback';
+import { useState } from 'react';
+
+interface UserProfilePageProps {
+  onNavigateHome?: () => void;
+  onNavigateBack?: () => void;
+  cartItemCount?: number;
+  onNavigateToCart?: () => void;
+}
+
+interface Order {
+  id: string;
+  date: string;
+  status: 'processing' | 'shipped' | 'delivered';
+  total: number;
+  items: number;
+}
+
+export function UserProfilePage({
+  onNavigateHome,
+  onNavigateBack,
+  cartItemCount = 0,
+  onNavigateToCart
+}: UserProfilePageProps) {
+  // Profile state
+  const [profileImage, setProfileImage] = useState(
+    'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400'
+  );
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profileData, setProfileData] = useState({
+    firstName: 'John',
+    lastName: 'Doe',
+    bio: 'Pet lover and proud owner of 2 dogs and 1 cat. Always looking for the best products for my furry friends!',
+    phone: '+1 (555) 123-4567',
+    email: 'john.doe@example.com',
+    stauts: '',
+    deviceType:'',
+    userType:'',
+    isVerified: false,
+    isShopAdmin: false,
+    facebookId: '',
+    googleId: '',
+    appleId: '',
+    aboutMe: '',
+  });
+
+  // Address state
+  const [sameAsShipping, setSameAsShipping] = useState(false);
+  const [billingAddress, setBillingAddress] = useState({
+    company:'',
+    address1: '',
+    address2: '',   
+    country: '',
+    state:'',
+    city:'',
+    postalCode: '',
+    email: '',
+    phone: '',
+  });
+  const [shippingAddress, setShippingAddress] = useState({
+  firstName: '',
+  lastName: '',
+  company: '',
+  address1: '',
+  address2: '',
+  country: '',
+  state: '',
+  city: '',
+  postalCode: '',
+  email: '',
+  phone: ''
+});
+  const [isEditingBilling, setIsEditingBilling] = useState(false);
+  const [isEditingShipping, setIsEditingShipping] = useState(false);
+
+  // Password dialog state
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    current: '',
+    new: '',
+    confirm: ''
+  });
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Recent orders
+  const recentOrders: Order[] = [
+    {
+      id: 'ORD-2024-001',
+      date: 'March 28, 2026',
+      status: 'delivered',
+      total: 149.97,
+      items: 3
+    },
+    {
+      id: 'ORD-2024-002',
+      date: 'April 1, 2026',
+      status: 'shipped',
+      total: 89.99,
+      items: 2
+    },
+    {
+      id: 'ORD-2024-003',
+      date: 'April 2, 2026',
+      status: 'processing',
+      total: 199.98,
+      items: 4
+    }
+  ];
+
+  const handleProfileImageUpload = () => {
+    // Mock image upload
+    const mockImages = [
+      'https://images.unsplash.com/photo-1599566150163-29194dcaad36?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400',
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400',
+      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400'
+    ];
+    const randomImage = mockImages[Math.floor(Math.random() * mockImages.length)];
+    setProfileImage(randomImage);
+  };
+
+  const handleSaveProfile = () => {
+    setIsEditingProfile(false);
+    // Show success message
+    alert('Profile updated successfully!');
+  };
+
+  const handleSaveBillingAddress = () => {
+    setIsEditingBilling(false);
+    alert('Billing address updated successfully!');
+  };
+
+  const handleSaveShippingAddress = () => {
+    setIsEditingShipping(false);
+    alert('Shipping address updated successfully!');
+  };
+
+  const handleChangePassword = () => {
+    if (passwordData.new !== passwordData.confirm) {
+      alert('New passwords do not match!');
+      return;
+    }
+    if (passwordData.new.length < 8) {
+      alert('Password must be at least 8 characters long!');
+      return;
+    }
+    // Mock password change
+    setPasswordDialogOpen(false);
+    setPasswordData({ current: '', new: '', confirm: '' });
+    alert('Password changed successfully!');
+  };
+
+  const handleLogout = () => {
+    if (confirm('Are you sure you want to logout?')) {
+      alert('Logged out successfully!');
+      if (onNavigateHome) onNavigateHome();
+    }
+  };
+
+  const getOrderStatusIcon = (status: Order['status']) => {
+    switch (status) {
+      case 'processing':
+        return <Clock className="w-4 h-4" />;
+      case 'shipped':
+        return <Truck className="w-4 h-4" />;
+      case 'delivered':
+        return <CheckCircle2 className="w-4 h-4" />;
+    }
+  };
+
+  const getOrderStatusColor = (status: Order['status']) => {
+    switch (status) {
+      case 'processing':
+        return 'bg-yellow-100 text-yellow-700 border-yellow-300';
+      case 'shipped':
+        return 'bg-blue-100 text-blue-700 border-blue-300';
+      case 'delivered':
+        return 'bg-green-100 text-green-700 border-green-300';
+    }
+  };
+
+  return (
+    <div className="max-w-9xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+      <main className="container mx-auto px-4 py-8">
+        {/* Page Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            {onNavigateBack && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onNavigateBack}
+                className="rounded-full hover:bg-primary/10"
+              >
+                <ArrowLeft className="w-5 h-5 text-primary" />
+              </Button>
+            )}
+            <div>
+              <h1 className="text-primary">My Profile</h1>
+              <p className="text-muted-foreground">
+                Manage your account settings and preferences
+              </p>
+            </div>
+          </div>
+          <Button variant="ghost" size="icon" className="rounded-full">
+            <Settings className="w-5 h-5 text-muted-foreground" />
+          </Button>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* Left Column - Profile Overview & Security */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Profile Overview */}
+<Card className="rounded-2xl shadow-md border border-gray-100">
+                <CardContent className="p-6 space-y-6">
+
+                <div className="flex flex-col items-center text-center space-y-4">
+                  {/* Profile Image */}
+                  <div className="relative group">
+                    <div className="w-32 h-32 rounded-full overflow-hidden bg-muted ring-4 ring-secondary/20">
+                      <ImageWithFallback
+                        src={profileImage}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <button
+                      onClick={handleProfileImageUpload}
+                      className="absolute bottom-0 right-0 w-10 h-10 rounded-full bg-gradient-to-r from-primary to-secondary text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+                    >
+                      <Camera className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  {/* User Info */}
+                  <div className="space-y-2 w-full">
+                    <h2 className="text-foreground">
+                      {profileData.firstName} {profileData.lastName}
+                    </h2>
+                    <p className="text-sm text-muted-foreground flex items-center justify-center gap-2">
+                      <Mail className="w-4 h-4" />
+                      {profileData.email}
+                    </p>
+                  </div>
+
+                  {/* Bio Preview */}
+                  <p className="text-sm text-muted-foreground line-clamp-2">
+                    {profileData.bio}
+                  </p>
+
+                  {/* Edit Profile Button */}
+                  <Button
+                    onClick={() => setIsEditingProfile(!isEditingProfile)}
+                    className="w-full rounded-full bg-gradient-to-r from-primary to-secondary text-white hover:from-primary/90 hover:to-secondary/90 shadow-lg"
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    {isEditingProfile ? 'Cancel' : 'Edit Profile'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Quick Actions */}
+            <Card className="rounded-3xl border-0 shadow-xl">
+              <CardHeader>
+                <CardTitle className="text-foreground">Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start rounded-xl hover:bg-primary/5 text-foreground"
+                >
+                  <Heart className="w-5 h-5 mr-3 text-secondary" />
+                  My Wishlist
+                  <Badge className="ml-auto bg-secondary/20 text-secondary border-0">
+                    12
+                  </Badge>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start rounded-xl hover:bg-primary/5 text-foreground"
+                >
+                  <Heart className="w-5 h-5 mr-3 text-primary" />
+                  Saved Pets
+                  <Badge className="ml-auto bg-primary/20 text-primary border-0">
+                    5
+                  </Badge>
+                </Button>
+                <Separator className="my-2" />
+                <Button
+                  variant="ghost"
+                  onClick={handleLogout}
+                  className="w-full justify-start rounded-xl hover:bg-destructive/10 text-destructive"
+                >
+                  <LogOut className="w-5 h-5 mr-3" />
+                  Logout
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Security Section */}
+            <Card className="rounded-3xl border-0 shadow-xl">
+              <CardHeader>
+                <CardTitle className="text-foreground flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-primary" />
+                  Security
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start rounded-xl border-primary/30 hover:border-primary hover:bg-primary/5"
+                    >
+                      <Lock className="w-5 h-5 mr-3 text-primary" />
+                      Change Password
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="rounded-3xl">
+                    <DialogHeader>
+                      <DialogTitle className="text-foreground flex items-center gap-2">
+                        <Lock className="w-5 h-5 text-primary" />
+                        Change Password
+                      </DialogTitle>
+                      <DialogDescription>
+                        Enter your current password and choose a new one. Password must
+                        be at least 8 characters long.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="currentPassword" className="text-foreground">
+                          Current Password
+                        </Label>
+                        <div className="relative">
+                          <Input
+                            id="currentPassword"
+                            type={showCurrentPassword ? 'text' : 'password'}
+                            value={passwordData.current}
+                            onChange={(e) =>
+                              setPasswordData({ ...passwordData, current: e.target.value })
+                            }
+                            className="h-11 rouded-lg pr-10"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          >
+                            {showCurrentPassword ? (
+                              <EyeOff className="w-5 h-5" />
+                            ) : (
+                              <Eye className="w-5 h-5" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="newPassword" className="text-foreground">
+                          New Password
+                        </Label>
+                        <div className="relative">
+                          <Input
+                            id="newPassword"
+                            type={showNewPassword ? 'text' : 'password'}
+                            value={passwordData.new}
+                            onChange={(e) =>
+                              setPasswordData({ ...passwordData, new: e.target.value })
+                            }
+                            className="rounded-xl pr-10"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowNewPassword(!showNewPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          >
+                            {showNewPassword ? (
+                              <EyeOff className="w-5 h-5" />
+                            ) : (
+                              <Eye className="w-5 h-5" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="confirmPassword" className="text-foreground">
+                          Confirm New Password
+                        </Label>
+                        <div className="relative">
+                          <Input
+                            id="confirmPassword"
+                            type={showConfirmPassword ? 'text' : 'password'}
+                            value={passwordData.confirm}
+                            onChange={(e) =>
+                              setPasswordData({ ...passwordData, confirm: e.target.value })
+                            }
+                            className="rounded-xl pr-10"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          >
+                            {showConfirmPassword ? (
+                              <EyeOff className="w-5 h-5" />
+                            ) : (
+                              <Eye className="w-5 h-5" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button
+                        variant="outline"
+                        onClick={() => setPasswordDialogOpen(false)}
+                        className="rounded-xl"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleChangePassword}
+                        className="rounded-xl bg-gradient-to-r from-primary to-secondary text-white hover:from-primary/90 hover:to-secondary/90"
+                      >
+                        Update Password
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+
+                <div className="p-4 rounded-2xl bg-primary/5 border border-primary/20">
+                  <div className="flex items-start gap-3">
+                    <Shield className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-foreground">
+                        Two-Factor Authentication
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Add an extra layer of security to your account
+                      </p>
+                      <Button
+                        variant="link"
+                        className="h-auto p-0 mt-2 text-primary hover:text-primary/80"
+                      >
+                        Enable 2FA
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+                        {/* Order Management */}
+            <Card className="rounded-3xl h-dvh border-0 shadow-xl">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-foreground flex items-center gap-2">
+                    <Package className="w-5 h-5 text-primary" />
+                    My Orders
+                  </CardTitle>
+                  <Button
+                    variant="ghost"
+                    className="text-primary hover:text-primary/80"
+                  >
+                    View All
+                    <ChevronRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {recentOrders.map((order) => (
+                  <div
+                    key={order.id}
+                    className="p-5 rounded-xl border bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <p className="text-foreground">{order.id}</p>
+                          <Badge
+                            className={`px-3 py-1 rounded-full text-xs capitalize ${getOrderStatusColor(
+                              order.status
+                            )}`}
+                          >
+                            {getOrderStatusIcon(order.status)}
+                            {order.status}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{order.date}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {order.items} {order.items === 1 ? 'item' : 'items'}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-secondary">
+                          ${order.total.toFixed(2)}
+                        </p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="mt-2 text-primary hover:text-primary/80"
+                        >
+                          Track Order
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                <Button
+                  variant="outline"
+                  className="w-full rounded-xl border-primary/30 hover:border-primary hover:bg-primary/5"
+                >
+                  <Package className="w-4 h-4 mr-2" />
+                  View All Orders
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Column - Details, Addresses & Orders */}
+          <div className="lg:col-span-2 w-full space-y-6">
+            {/* Personal Information */}
+            <Card className="rounded-3xl border-0 shadow-xl">
+              <CardHeader>
+                <CardTitle className="text-foreground flex items-center gap-2">
+                  <User className="w-5 h-5 text-primary" />
+                  Personal Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="firstName" className="text-foreground">
+                        First Name
+                      </Label>
+                      <Input
+                        id="firstName"
+                        value={profileData.firstName}
+                        onChange={(e) =>
+                          setProfileData({ ...profileData, firstName: e.target.value })
+                        }
+                        disabled={!isEditingProfile}
+                        className="rounded-xl border-primary/30 focus:border-primary disabled:opacity-70"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName" className="text-foreground">
+                        Last Name
+                      </Label>
+                      <Input
+                        id="lastName"
+                        value={profileData.lastName}
+                        onChange={(e) =>
+                          setProfileData({ ...profileData, lastName: e.target.value })
+                        }
+                        disabled={!isEditingProfile}
+                        className="rounded-xl border-primary/30 focus:border-primary disabled:opacity-70"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="bio" className="text-foreground">
+                      Bio
+                    </Label>
+                    <textarea
+                      id="bio"
+                      rows={3}
+                      value={profileData.bio}
+                      onChange={(e) =>
+                        setProfileData({ ...profileData, bio: e.target.value })
+                      }
+                      disabled={!isEditingProfile}
+                      className="w-full min-h-[100px] rounded-lg border px-3 py-2"
+                      placeholder="Tell us about yourself and your pets..."
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {profileData.bio.length}/200 characters
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="phone" className="text-foreground">
+                      Phone Number
+                    </Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                      <Input
+                        id="phone"
+                        type="tel"
+                        value={profileData.phone}
+                        onChange={(e) =>
+                          setProfileData({ ...profileData, phone: e.target.value })
+                        }
+                        disabled={!isEditingProfile}
+                        className="pl-10 rounded-xl border-primary/30 focus:border-primary disabled:opacity-70"
+                      />
+                    </div>
+                    {/* Additional Fields */}
+<div className="grid md:grid-cols-2 gap-6">
+  <div>
+    <Label>Status</Label>
+    <Input
+      value={profileData.status}
+      onChange={(e) => setProfileData({ ...profileData, status: e.target.value })}
+      disabled={!isEditingProfile}
+    />
+  </div>
+
+  <div>
+    <Label>User Type</Label>
+    <Input
+      value={profileData.userType}
+      onChange={(e) => setProfileData({ ...profileData, userType: e.target.value })}
+      disabled={!isEditingProfile}
+    />
+  </div>
+</div>
+
+<div className="grid md:grid-cols-2 gap-6">
+  <div>
+    <Label>Device Type</Label>
+    <Input
+      value={profileData.deviceType}
+      onChange={(e) => setProfileData({ ...profileData, deviceType: e.target.value })}
+      disabled={!isEditingProfile}
+    />
+  </div>
+
+  <div className="flex items-center gap-4 mt-6">
+    <Checkbox
+      checked={profileData.isVerified}
+      onCheckedChange={(val) => setProfileData({ ...profileData, isVerified: !!val })}
+    />
+    <Label>Verified User</Label>
+  </div>
+</div>
+                  </div>
+
+                  {isEditingProfile && (
+                    <div className="flex gap-3 pt-2">
+                      <Button
+                        onClick={handleSaveProfile}
+                        className="flex-1 rounded-full bg-gradient-to-r from-primary to-secondary text-white hover:from-primary/90 hover:to-secondary/90 shadow-lg"
+                      >
+                        <Save className="w-4 h-4 mr-2" />
+                        Save Changes
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsEditingProfile(false)}
+                        className="rounded-full border-primary/30"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Address Management */}
+            <Card className="rounded-3xl border-0 shadow-xl">
+              <CardHeader>
+                <CardTitle className="text-foreground flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-primary" />
+                  Addresses
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Billing Address */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-foreground flex items-center gap-2">
+                      <Home className="w-5 h-5 text-secondary" />
+                      Billing Address
+                    </h3>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsEditingBilling(!isEditingBilling)}
+                      className="text-primary hover:text-primary/80"
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      {isEditingBilling ? 'Cancel' : 'Edit'}
+                    </Button>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-muted/30 space-y-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="billingAddress" className="text-foreground">
+                        Address
+                      </Label>
+                      <textarea
+                        id="billingAddress"
+                        rows={2}
+                        value={billingAddress.address}
+                        onChange={(e) =>
+                          setBillingAddress({ ...billingAddress, address: e.target.value })
+                        }
+                        disabled={!isEditingBilling}
+                        className="w-full min-h-[100px] rounded-lg border px-3 py-2"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="billingCountry" className="text-foreground">
+                        Country
+                      </Label>
+                      <Input
+                        id="billingCountry"
+                        value={billingAddress.country}
+                        onChange={(e) =>
+                          setBillingAddress({ ...billingAddress, country: e.target.value })
+                        }
+                        disabled={!isEditingBilling}
+                        className="rounded-xl border-primary/30 focus:border-primary disabled:opacity-70 disabled:bg-muted/20"
+                      />
+                    </div>
+
+
+<div className="grid md:grid-cols-2 gap-6">
+  <Input placeholder="Company" value={billingAddress.company} />
+  <Input placeholder="Email" value={billingAddress.email} />
+</div>
+
+<div className="space-y-4">
+  <Input placeholder="Address Line 1" value={billingAddress.address1} />
+  <Input placeholder="Address Line 2" value={billingAddress.address2} />
+</div>
+
+<div className="grid md:grid-cols-3 gap-6">
+  <Input placeholder="City" value={billingAddress.city} />
+  <Input placeholder="State" value={billingAddress.state} />
+  <Input placeholder="Postal Code" value={billingAddress.postalCode} />
+</div>
+
+
+                    {isEditingBilling && (
+                      <Button
+                        onClick={handleSaveBillingAddress}
+                        size="sm"
+                        className="w-full rounded-full bg-gradient-to-r from-primary to-secondary text-white hover:from-primary/90 hover:to-secondary/90"
+                      >
+                        <Save className="w-4 h-4 mr-2" />
+                        Save Billing Address
+                      </Button>
+                    )}
+                  </div>
+                  
+                </div>
+
+                <Separator />
+
+                {/* Shipping Address */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-foreground flex items-center gap-2">
+                      <Truck className="w-5 h-5 text-secondary" />
+                      Shipping Address
+                    </h3>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="sameAsShipping"
+                          checked={sameAsShipping}
+                          onCheckedChange={(checked) =>
+                            setSameAsShipping(checked as boolean)
+                          }
+                        />
+                        <Label
+                          htmlFor="sameAsShipping"
+                          className="text-sm text-muted-foreground cursor-pointer"
+                        >
+                          Same as billing
+                        </Label>
+                      </div>
+                      
+                      {!sameAsShipping && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setIsEditingShipping(!isEditingShipping)}
+                          className="text-primary hover:text-primary/80"
+                        >
+                          <Edit className="w-4 h-4 mr-2" />
+                          {isEditingShipping ? 'Cancel' : 'Edit'}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  {!sameAsShipping && (
+                    <div className="p-4 rounded-2xl bg-muted/30 space-y-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="shippingAddress" className="text-foreground">
+                          Address
+                        </Label>
+                        <textarea
+                          id="shippingAddress"
+                          rows={2}
+                          value={shippingAddress.address}
+                          onChange={(e) =>
+                            setShippingAddress({
+                              ...shippingAddress,
+                              address: e.target.value
+                            })
+                          }
+                          disabled={!isEditingShipping}
+                          className="w-full min-h-[100px] rounded-lg border px-3 py-2"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="shippingCountry" className="text-foreground">
+                          Country
+                        </Label>
+                        <Input
+                          id="shippingCountry"
+                          value={shippingAddress.country}
+                          onChange={(e) =>
+                            setShippingAddress({
+                              ...shippingAddress,
+                              country: e.target.value
+                            })
+                          }
+                          disabled={!isEditingShipping}
+                          className="rounded-xl border-primary/30 focus:border-primary disabled:opacity-70 disabled:bg-muted/20"
+                        />
+                      </div>
+
+
+<div className="grid md:grid-cols-2 gap-6">
+  <Input placeholder="Company" value={billingAddress.company} />
+  <Input placeholder="Email" value={billingAddress.email} />
+</div>
+
+<div className="space-y-4">
+  <Input placeholder="Address Line 1" value={billingAddress.address1} />
+  <Input placeholder="Address Line 2" value={billingAddress.address2} />
+</div>
+
+<div className="grid md:grid-cols-3 gap-6">
+  <Input placeholder="City" value={billingAddress.city} />
+  <Input placeholder="State" value={billingAddress.state} />
+  <Input placeholder="Postal Code" value={billingAddress.postalCode} />
+</div>
+
+                      {isEditingShipping && (
+                        <Button
+                          onClick={handleSaveShippingAddress}
+                          size="sm"
+                          className="w-full rounded-full bg-gradient-to-r from-primary to-secondary text-white hover:from-primary/90 hover:to-secondary/90"
+                        >
+                          <Save className="w-4 h-4 mr-2" />
+                          Save Shipping Address
+                        </Button>
+                      )}
+                    </div>
+                  )}
+
+                  {sameAsShipping && (
+                    <div className="p-4 rounded-2xl bg-green-50 border border-green-200 flex items-center gap-3">
+                      <Check className="w-5 h-5 text-green-600 flex-shrink-0" />
+                      <p className="text-sm text-green-700">
+                        Shipping address is the same as billing address
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+
+          </div>
+        </div>
+      </main>
+
+      {/* <Footer /> */}
+    </div>
+  );
+}
