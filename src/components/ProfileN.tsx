@@ -86,9 +86,10 @@ export function UserProfilePage({
   });
   const updateProfile = async (data: any) => {
     try {
-      const response = await axios.patch("authUser/updateProfile", data, {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const response = await axios.patch(`https://www.wowpetspalace.com/test/authUser/updateProfile`, data, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${user.auth_token}`,
         },
       });
       return response.data;
@@ -898,6 +899,7 @@ export function UserProfilePage({
                       <Input
                         placeholder="Company"
                         value={billingAddress.company}
+                        onChange={(e)=> setBillingAddress({...billingAddress, company: e.target.value})}
                       />
                       <Input placeholder="Email" value={billingAddress.email} />
                     </div>
@@ -1020,11 +1022,11 @@ export function UserProfilePage({
                       <div className="grid md:grid-cols-2 gap-6">
                         <Input
                           placeholder="Company"
-                          value={billingAddress.company}
+                          value={shippingAddress.company}
                         />
                         <Input
                           placeholder="Email"
-                          value={billingAddress.email}
+                          value={shippingAddress.email}
                         />
                       </div>
 
@@ -1034,11 +1036,11 @@ export function UserProfilePage({
                         <Input placeholder="City" value={billingAddress.city} />
                         <Input
                           placeholder="State"
-                          value={billingAddress.state}
+                          value={shippingAddress.state}
                         />
                         <Input
                           placeholder="Postal Code"
-                          value={billingAddress.postalCode}
+                          value={shippingAddress.postalCode}
                         />
                       </div>
 
