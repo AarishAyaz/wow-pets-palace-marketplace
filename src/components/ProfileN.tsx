@@ -20,17 +20,15 @@ import {
   Settings,
   Clock,
   Truck,
-  CheckCircle2
-} from 'lucide-react';
-import { Header } from './Header';
-import { Footer } from './Footer';
-import { Button } from './ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Separator } from './ui/separator';
-import { Badge } from './ui/badge';
-import { Checkbox } from './ui/checkbox';
+  CheckCircle2,
+} from "lucide-react";
+import { Button } from "./ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Separator } from "./ui/separator";
+import { Badge } from "./ui/badge";
+import { Checkbox } from "./ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -38,10 +36,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter
-} from './ui/dialog';
-import { ImageWithFallback } from './figma/ImageWithFallback';
-import { useState } from 'react';
+  DialogFooter,
+} from "./ui/dialog";
+import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { useState } from "react";
+import axios from "axios";
 
 interface UserProfilePageProps {
   onNavigateHome?: () => void;
@@ -53,7 +52,7 @@ interface UserProfilePageProps {
 interface Order {
   id: string;
   date: string;
-  status: 'processing' | 'shipped' | 'delivered';
+  status: "processing" | "shipped" | "delivered";
   total: number;
   items: number;
 }
@@ -62,169 +61,251 @@ export function UserProfilePage({
   onNavigateHome,
   onNavigateBack,
   cartItemCount = 0,
-  onNavigateToCart
+  onNavigateToCart,
 }: UserProfilePageProps) {
   // Profile state
   const [profileImage, setProfileImage] = useState(
-    'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400'
+    "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
   );
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileData, setProfileData] = useState({
-    firstName: 'John',
-    lastName: 'Doe',
-    bio: 'Pet lover and proud owner of 2 dogs and 1 cat. Always looking for the best products for my furry friends!',
-    phone: '+1 (555) 123-4567',
-    email: 'john.doe@example.com',
-    stauts: '',
-    deviceType:'',
-    userType:'',
+    firstName: "John",
+    lastName: "Doe",
+    bio: "Pet lover and proud owner of 2 dogs and 1 cat. Always looking for the best products for my furry friends!",
+    phone: "+1 (555) 123-4567",
+    email: "john.doe@example.com",
+    status: "",
+    deviceType: "",
+    userType: "",
     isVerified: false,
     isShopAdmin: false,
-    facebookId: '',
-    googleId: '',
-    appleId: '',
-    aboutMe: '',
+    facebookId: "",
+    googleId: "",
+    appleId: "",
+    aboutMe: "",
   });
+  const updateProfile = async (data: any) => {
+    try {
+      const response = await axios.patch("authUser/updateProfile", data, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error(
+        "Update Profile Error:",
+        error?.response?.data || error.message,
+      );
+      throw error;
+    }
+  };
+
+  const buildPayload = () => {
+    return {
+      firstName: profileData.firstName,
+      lastName: profileData.lastName,
+      phoneNumber: profileData.phone,
+      status: profileData.status,
+      devicetype: profileData.deviceType,
+      user_type: profileData.userType,
+      isVerified: profileData.isVerified,
+      is_shop_admin: profileData.isShopAdmin,
+      facebook_id: profileData.facebookId,
+      google_id: profileData.googleId,
+      apple_id: profileData.appleId,
+      user_about_me: profileData.bio,
+
+      billing_company: billingAddress.company,
+      billing_address_1: billingAddress.address1,
+      billing_address_2: billingAddress.address2,
+      billing_country: billingAddress.country,
+      billing_state: billingAddress.state,
+      billing_city: billingAddress.city,
+      billing_postal_code: billingAddress.postalCode,
+      billing_email: billingAddress.email,
+      billing_phone: billingAddress.phone,
+
+      shipping_company: sameAsShipping
+        ? billingAddress.company
+        : shippingAddress.company,
+      shipping_address_1: sameAsShipping
+        ? billingAddress.address1
+        : shippingAddress.address1,
+      shipping_address_2: sameAsShipping
+        ? billingAddress.address2
+        : shippingAddress.address2,
+      shipping_country: sameAsShipping
+        ? billingAddress.country
+        : shippingAddress.country,
+      shipping_state: sameAsShipping
+        ? billingAddress.state
+        : shippingAddress.state,
+      shipping_city: sameAsShipping
+        ? billingAddress.city
+        : shippingAddress.city,
+      shipping_postal_code: sameAsShipping
+        ? billingAddress.postalCode
+        : shippingAddress.postalCode,
+      shipping_email: sameAsShipping
+        ? billingAddress.email
+        : shippingAddress.email,
+      shipping_phone: sameAsShipping
+        ? billingAddress.phone
+        : shippingAddress.phone,
+    };
+  };
 
   // Address state
-  const [sameAsShipping, setSameAsShipping] = useState(false);
+  const [sameAsShipping, setSameAsShipping] = useState(true);
   const [billingAddress, setBillingAddress] = useState({
-    company:'',
-    address1: '',
-    address2: '',   
-    country: '',
-    state:'',
-    city:'',
-    postalCode: '',
-    email: '',
-    phone: '',
+    company: "",
+    address1: "",
+    address2: "",
+    country: "",
+    state: "",
+    city: "",
+    postalCode: "",
+    email: "",
+    phone: "",
   });
   const [shippingAddress, setShippingAddress] = useState({
-  firstName: '',
-  lastName: '',
-  company: '',
-  address1: '',
-  address2: '',
-  country: '',
-  state: '',
-  city: '',
-  postalCode: '',
-  email: '',
-  phone: ''
-});
+    firstName: "",
+    lastName: "",
+    company: "",
+    address1: "",
+    address2: "",
+    country: "",
+    state: "",
+    city: "",
+    postalCode: "",
+    email: "",
+    phone: "",
+  });
   const [isEditingBilling, setIsEditingBilling] = useState(false);
   const [isEditingShipping, setIsEditingShipping] = useState(false);
 
   // Password dialog state
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [passwordData, setPasswordData] = useState({
-    current: '',
-    new: '',
-    confirm: ''
+    current: "",
+    new: "",
+    confirm: "",
   });
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
+  const [loading, setLoading] = useState(false);
   // Recent orders
   const recentOrders: Order[] = [
     {
-      id: 'ORD-2024-001',
-      date: 'March 28, 2026',
-      status: 'delivered',
+      id: "ORD-2024-001",
+      date: "March 28, 2026",
+      status: "delivered",
       total: 149.97,
-      items: 3
+      items: 3,
     },
     {
-      id: 'ORD-2024-002',
-      date: 'April 1, 2026',
-      status: 'shipped',
+      id: "ORD-2024-002",
+      date: "April 1, 2026",
+      status: "shipped",
       total: 89.99,
-      items: 2
+      items: 2,
     },
     {
-      id: 'ORD-2024-003',
-      date: 'April 2, 2026',
-      status: 'processing',
+      id: "ORD-2024-003",
+      date: "April 2, 2026",
+      status: "processing",
       total: 199.98,
-      items: 4
-    }
+      items: 4,
+    },
   ];
 
   const handleProfileImageUpload = () => {
     // Mock image upload
     const mockImages = [
-      'https://images.unsplash.com/photo-1599566150163-29194dcaad36?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400',
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400',
-      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400'
+      "https://images.unsplash.com/photo-1599566150163-29194dcaad36?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
     ];
-    const randomImage = mockImages[Math.floor(Math.random() * mockImages.length)];
+    const randomImage =
+      mockImages[Math.floor(Math.random() * mockImages.length)];
     setProfileImage(randomImage);
   };
 
-  const handleSaveProfile = () => {
-    setIsEditingProfile(false);
-    // Show success message
-    alert('Profile updated successfully!');
+  const handleSaveProfile = async () => {
+    try {
+      setLoading(true);
+      const payload = buildPayload();
+
+      await updateProfile(payload);
+      setIsEditingProfile(false);
+
+      alert("Profile Updated Successfully!");
+    } catch (error) {
+      console.error(error);
+      alert("Something went wrong");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSaveBillingAddress = () => {
     setIsEditingBilling(false);
-    alert('Billing address updated successfully!');
+    alert("Billing address updated successfully!");
   };
 
   const handleSaveShippingAddress = () => {
     setIsEditingShipping(false);
-    alert('Shipping address updated successfully!');
+    alert("Shipping address updated successfully!");
   };
 
   const handleChangePassword = () => {
     if (passwordData.new !== passwordData.confirm) {
-      alert('New passwords do not match!');
+      alert("New passwords do not match!");
       return;
     }
     if (passwordData.new.length < 8) {
-      alert('Password must be at least 8 characters long!');
+      alert("Password must be at least 8 characters long!");
       return;
     }
     // Mock password change
     setPasswordDialogOpen(false);
-    setPasswordData({ current: '', new: '', confirm: '' });
-    alert('Password changed successfully!');
+    setPasswordData({ current: "", new: "", confirm: "" });
+    alert("Password changed successfully!");
   };
 
   const handleLogout = () => {
-    if (confirm('Are you sure you want to logout?')) {
-      alert('Logged out successfully!');
+    if (confirm("Are you sure you want to logout?")) {
+      alert("Logged out successfully!");
       if (onNavigateHome) onNavigateHome();
     }
   };
 
-  const getOrderStatusIcon = (status: Order['status']) => {
+  const getOrderStatusIcon = (status: Order["status"]) => {
     switch (status) {
-      case 'processing':
+      case "processing":
         return <Clock className="w-4 h-4" />;
-      case 'shipped':
+      case "shipped":
         return <Truck className="w-4 h-4" />;
-      case 'delivered':
+      case "delivered":
         return <CheckCircle2 className="w-4 h-4" />;
     }
   };
 
-  const getOrderStatusColor = (status: Order['status']) => {
+  const getOrderStatusColor = (status: Order["status"]) => {
     switch (status) {
-      case 'processing':
-        return 'bg-yellow-100 text-yellow-700 border-yellow-300';
-      case 'shipped':
-        return 'bg-blue-100 text-blue-700 border-blue-300';
-      case 'delivered':
-        return 'bg-green-100 text-green-700 border-green-300';
+      case "processing":
+        return "bg-yellow-100 text-yellow-700 border-yellow-300";
+      case "shipped":
+        return "bg-blue-100 text-blue-700 border-blue-300";
+      case "delivered":
+        return "bg-green-100 text-green-700 border-green-300";
     }
   };
 
   return (
     <div className="max-w-9xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
       <main className="container mx-auto px-4 py-8">
         {/* Page Header */}
         <div className="flex items-center justify-between mb-8">
@@ -255,10 +336,9 @@ export function UserProfilePage({
           {/* Left Column - Profile Overview & Security */}
           <div className="lg:col-span-1 space-y-6">
             {/* Profile Overview */}
-<Card className="rounded-2xl shadow-md border border-gray-100">
-                <CardContent className="p-6 space-y-6">
-
-                <div className="flex flex-col items-center text-center space-y-4">
+            <Card className="rounded-3xl shadow-md border border-gray-100">
+              <CardContent className="p-6  space-y-6">
+                <div className="flex flex-col items-center text-center space-y-6">
                   {/* Profile Image */}
                   <div className="relative group">
                     <div className="w-32 h-32 rounded-full overflow-hidden bg-muted ring-4 ring-secondary/20">
@@ -270,14 +350,14 @@ export function UserProfilePage({
                     </div>
                     <button
                       onClick={handleProfileImageUpload}
-                      className="absolute bottom-0 right-0 w-10 h-10 rounded-full bg-gradient-to-r from-primary to-secondary text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+                      className=" absolute bottom-0 right-0 w-10 h-10 rounded-full bg-gradient-to-r from-primary to-secondary text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
                     >
-                      <Camera className="w-5 h-5" />
+                      <Camera className="w-5 h-5 " />
                     </button>
                   </div>
 
                   {/* User Info */}
-                  <div className="space-y-2 w-full">
+                  <div className="space-y-2  w-full">
                     <h2 className="text-foreground">
                       {profileData.firstName} {profileData.lastName}
                     </h2>
@@ -298,7 +378,7 @@ export function UserProfilePage({
                     className="w-full rounded-full bg-gradient-to-r from-primary to-secondary text-white hover:from-primary/90 hover:to-secondary/90 shadow-lg"
                   >
                     <Edit className="w-4 h-4 mr-2" />
-                    {isEditingProfile ? 'Cancel' : 'Edit Profile'}
+                    {isEditingProfile ? "Cancel" : "Edit Profile"}
                   </Button>
                 </div>
               </CardContent>
@@ -351,7 +431,10 @@ export function UserProfilePage({
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+                <Dialog
+                  open={passwordDialogOpen}
+                  onOpenChange={setPasswordDialogOpen}
+                >
                   <DialogTrigger asChild>
                     <Button
                       variant="outline"
@@ -368,28 +451,36 @@ export function UserProfilePage({
                         Change Password
                       </DialogTitle>
                       <DialogDescription>
-                        Enter your current password and choose a new one. Password must
-                        be at least 8 characters long.
+                        Enter your current password and choose a new one.
+                        Password must be at least 8 characters long.
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                       <div className="space-y-2">
-                        <Label htmlFor="currentPassword" className="text-foreground">
+                        <Label
+                          htmlFor="currentPassword"
+                          className="text-foreground"
+                        >
                           Current Password
                         </Label>
                         <div className="relative">
                           <Input
                             id="currentPassword"
-                            type={showCurrentPassword ? 'text' : 'password'}
+                            type={showCurrentPassword ? "text" : "password"}
                             value={passwordData.current}
                             onChange={(e) =>
-                              setPasswordData({ ...passwordData, current: e.target.value })
+                              setPasswordData({
+                                ...passwordData,
+                                current: e.target.value,
+                              })
                             }
                             className="h-11 rouded-lg pr-10"
                           />
                           <button
                             type="button"
-                            onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                            onClick={() =>
+                              setShowCurrentPassword(!showCurrentPassword)
+                            }
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                           >
                             {showCurrentPassword ? (
@@ -401,16 +492,22 @@ export function UserProfilePage({
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="newPassword" className="text-foreground">
+                        <Label
+                          htmlFor="newPassword"
+                          className="text-foreground"
+                        >
                           New Password
                         </Label>
                         <div className="relative">
                           <Input
                             id="newPassword"
-                            type={showNewPassword ? 'text' : 'password'}
+                            type={showNewPassword ? "text" : "password"}
                             value={passwordData.new}
                             onChange={(e) =>
-                              setPasswordData({ ...passwordData, new: e.target.value })
+                              setPasswordData({
+                                ...passwordData,
+                                new: e.target.value,
+                              })
                             }
                             className="rounded-xl pr-10"
                           />
@@ -428,22 +525,30 @@ export function UserProfilePage({
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="confirmPassword" className="text-foreground">
+                        <Label
+                          htmlFor="confirmPassword"
+                          className="text-foreground"
+                        >
                           Confirm New Password
                         </Label>
                         <div className="relative">
                           <Input
                             id="confirmPassword"
-                            type={showConfirmPassword ? 'text' : 'password'}
+                            type={showConfirmPassword ? "text" : "password"}
                             value={passwordData.confirm}
                             onChange={(e) =>
-                              setPasswordData({ ...passwordData, confirm: e.target.value })
+                              setPasswordData({
+                                ...passwordData,
+                                confirm: e.target.value,
+                              })
                             }
                             className="rounded-xl pr-10"
                           />
                           <button
                             type="button"
-                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            onClick={() =>
+                              setShowConfirmPassword(!showConfirmPassword)
+                            }
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                           >
                             {showConfirmPassword ? (
@@ -494,7 +599,7 @@ export function UserProfilePage({
                 </div>
               </CardContent>
             </Card>
-                        {/* Order Management */}
+            {/* Order Management */}
             <Card className="rounded-3xl h-dvh border-0 shadow-xl">
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -523,16 +628,18 @@ export function UserProfilePage({
                           <p className="text-foreground">{order.id}</p>
                           <Badge
                             className={`px-3 py-1 rounded-full text-xs capitalize ${getOrderStatusColor(
-                              order.status
+                              order.status,
                             )}`}
                           >
                             {getOrderStatusIcon(order.status)}
                             {order.status}
                           </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground">{order.date}</p>
                         <p className="text-sm text-muted-foreground">
-                          {order.items} {order.items === 1 ? 'item' : 'items'}
+                          {order.date}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {order.items} {order.items === 1 ? "item" : "items"}
                         </p>
                       </div>
                       <div className="text-right">
@@ -583,7 +690,10 @@ export function UserProfilePage({
                         id="firstName"
                         value={profileData.firstName}
                         onChange={(e) =>
-                          setProfileData({ ...profileData, firstName: e.target.value })
+                          setProfileData({
+                            ...profileData,
+                            firstName: e.target.value,
+                          })
                         }
                         disabled={!isEditingProfile}
                         className="rounded-xl border-primary/30 focus:border-primary disabled:opacity-70"
@@ -597,7 +707,10 @@ export function UserProfilePage({
                         id="lastName"
                         value={profileData.lastName}
                         onChange={(e) =>
-                          setProfileData({ ...profileData, lastName: e.target.value })
+                          setProfileData({
+                            ...profileData,
+                            lastName: e.target.value,
+                          })
                         }
                         disabled={!isEditingProfile}
                         className="rounded-xl border-primary/30 focus:border-primary disabled:opacity-70"
@@ -636,61 +749,62 @@ export function UserProfilePage({
                         type="tel"
                         value={profileData.phone}
                         onChange={(e) =>
-                          setProfileData({ ...profileData, phone: e.target.value })
+                          setProfileData({
+                            ...profileData,
+                            phone: e.target.value,
+                          })
                         }
                         disabled={!isEditingProfile}
                         className="pl-10 rounded-xl border-primary/30 focus:border-primary disabled:opacity-70"
                       />
                     </div>
                     {/* Additional Fields */}
-<div className="grid md:grid-cols-2 gap-6">
-  <div>
-    <Label>Status</Label>
-    <Input
-      value={profileData.status}
-      onChange={(e) => setProfileData({ ...profileData, status: e.target.value })}
-      disabled={!isEditingProfile}
-    />
-  </div>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div>
+                        <Label>Status</Label>
+                        <Input
+                          value={profileData.status}
+                          onChange={(e) =>
+                            setProfileData({
+                              ...profileData,
+                              status: e.target.value,
+                            })
+                          }
+                          disabled={!isEditingProfile}
+                        />
+                      </div>
 
-  <div>
-    <Label>User Type</Label>
-    <Input
-      value={profileData.userType}
-      onChange={(e) => setProfileData({ ...profileData, userType: e.target.value })}
-      disabled={!isEditingProfile}
-    />
-  </div>
-</div>
-
-<div className="grid md:grid-cols-2 gap-6">
-  <div>
-    <Label>Device Type</Label>
-    <Input
-      value={profileData.deviceType}
-      onChange={(e) => setProfileData({ ...profileData, deviceType: e.target.value })}
-      disabled={!isEditingProfile}
-    />
-  </div>
-
-  <div className="flex items-center gap-4 mt-6">
-    <Checkbox
-      checked={profileData.isVerified}
-      onCheckedChange={(val) => setProfileData({ ...profileData, isVerified: !!val })}
-    />
-    <Label>Verified User</Label>
-  </div>
-</div>
+                      <div>
+                        <Label>User Type</Label>
+                        <Input
+                          value={profileData.userType}
+                          onChange={(e) =>
+                            setProfileData({
+                              ...profileData,
+                              userType: e.target.value,
+                            })
+                          }
+                          disabled={!isEditingProfile}
+                        />
+                      </div>
+                    </div>
                   </div>
 
                   {isEditingProfile && (
                     <div className="flex gap-3 pt-2">
                       <Button
                         onClick={handleSaveProfile}
-                        className="flex-1 rounded-full bg-gradient-to-r from-primary to-secondary text-white hover:from-primary/90 hover:to-secondary/90 shadow-lg"
+                        disabled={loading}
+                        className="flex-1 rounded-full bg-gradient-to-r from-primary to-secondary text-white"
                       >
-                        <Save className="w-4 h-4 mr-2" />
-                        Save Changes
+                        {loading ? (
+                          "Saving..."
+                        ) : (
+                          <>
+                            <Save className="w-4 h-4 mr-2" />
+                            Save Changes
+                          </>
+                        )}
                       </Button>
                       <Button
                         variant="outline"
@@ -728,58 +842,76 @@ export function UserProfilePage({
                       className="text-primary hover:text-primary/80"
                     >
                       <Edit className="w-4 h-4 mr-2" />
-                      {isEditingBilling ? 'Cancel' : 'Edit'}
+                      {isEditingBilling ? "Cancel" : "Edit"}
                     </Button>
                   </div>
 
                   <div className="p-4 rounded-2xl bg-muted/30 space-y-3">
                     <div className="space-y-2">
-                      <Label htmlFor="billingAddress" className="text-foreground">
+                      <Label
+                        htmlFor="billingAddress"
+                        className="text-foreground"
+                      >
                         Address
                       </Label>
                       <textarea
                         id="billingAddress"
+                        placeholder="Address Line 1"
                         rows={2}
-                        value={billingAddress.address}
+                        value={billingAddress.address1}
                         onChange={(e) =>
-                          setBillingAddress({ ...billingAddress, address: e.target.value })
+                          setBillingAddress({
+                            ...billingAddress,
+                            address1: e.target.value,
+                          })
                         }
                         disabled={!isEditingBilling}
                         className="w-full min-h-[100px] rounded-lg border px-3 py-2"
                       />
+                      <Input
+                        placeholder="Address Line 2"
+                        value={billingAddress.address2}
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="billingCountry" className="text-foreground">
+                      <Label
+                        htmlFor="billingCountry"
+                        className="text-foreground"
+                      >
                         Country
                       </Label>
                       <Input
                         id="billingCountry"
                         value={billingAddress.country}
                         onChange={(e) =>
-                          setBillingAddress({ ...billingAddress, country: e.target.value })
+                          setBillingAddress({
+                            ...billingAddress,
+                            country: e.target.value,
+                          })
                         }
                         disabled={!isEditingBilling}
                         className="rounded-xl border-primary/30 focus:border-primary disabled:opacity-70 disabled:bg-muted/20"
                       />
                     </div>
 
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <Input
+                        placeholder="Company"
+                        value={billingAddress.company}
+                      />
+                      <Input placeholder="Email" value={billingAddress.email} />
+                    </div>
 
-<div className="grid md:grid-cols-2 gap-6">
-  <Input placeholder="Company" value={billingAddress.company} />
-  <Input placeholder="Email" value={billingAddress.email} />
-</div>
+                    <div className="space-y-4"></div>
 
-<div className="space-y-4">
-  <Input placeholder="Address Line 1" value={billingAddress.address1} />
-  <Input placeholder="Address Line 2" value={billingAddress.address2} />
-</div>
-
-<div className="grid md:grid-cols-3 gap-6">
-  <Input placeholder="City" value={billingAddress.city} />
-  <Input placeholder="State" value={billingAddress.state} />
-  <Input placeholder="Postal Code" value={billingAddress.postalCode} />
-</div>
-
+                    <div className="grid md:grid-cols-3 gap-6">
+                      <Input placeholder="City" value={billingAddress.city} />
+                      <Input placeholder="State" value={billingAddress.state} />
+                      <Input
+                        placeholder="Postal Code"
+                        value={billingAddress.postalCode}
+                      />
+                    </div>
 
                     {isEditingBilling && (
                       <Button
@@ -792,7 +924,6 @@ export function UserProfilePage({
                       </Button>
                     )}
                   </div>
-                  
                 </div>
 
                 <Separator />
@@ -820,16 +951,18 @@ export function UserProfilePage({
                           Same as billing
                         </Label>
                       </div>
-                      
+
                       {!sameAsShipping && (
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setIsEditingShipping(!isEditingShipping)}
+                          onClick={() =>
+                            setIsEditingShipping(!isEditingShipping)
+                          }
                           className="text-primary hover:text-primary/80"
                         >
                           <Edit className="w-4 h-4 mr-2" />
-                          {isEditingShipping ? 'Cancel' : 'Edit'}
+                          {isEditingShipping ? "Cancel" : "Edit"}
                         </Button>
                       )}
                     </div>
@@ -838,25 +971,36 @@ export function UserProfilePage({
                   {!sameAsShipping && (
                     <div className="p-4 rounded-2xl bg-muted/30 space-y-3">
                       <div className="space-y-2">
-                        <Label htmlFor="shippingAddress" className="text-foreground">
+                        <Label
+                          htmlFor="shippingAddress"
+                          className="text-foreground"
+                        >
                           Address
                         </Label>
                         <textarea
                           id="shippingAddress"
+                          placeholder="Address Line 1"
                           rows={2}
-                          value={shippingAddress.address}
+                          value={shippingAddress.address1}
                           onChange={(e) =>
                             setShippingAddress({
                               ...shippingAddress,
-                              address: e.target.value
+                              address1: e.target.value,
                             })
                           }
                           disabled={!isEditingShipping}
-                          className="w-full min-h-[100px] rounded-lg border px-3 py-2"
+                          className="flex min-h-[80px] w-full rounded-md border border-input bg-input-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        />
+                        <Input
+                          placeholder="Address Line 2"
+                          value={billingAddress.address2}
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="shippingCountry" className="text-foreground">
+                        <Label
+                          htmlFor="shippingCountry"
+                          className="text-foreground"
+                        >
                           Country
                         </Label>
                         <Input
@@ -865,7 +1009,7 @@ export function UserProfilePage({
                           onChange={(e) =>
                             setShippingAddress({
                               ...shippingAddress,
-                              country: e.target.value
+                              country: e.target.value,
                             })
                           }
                           disabled={!isEditingShipping}
@@ -873,22 +1017,30 @@ export function UserProfilePage({
                         />
                       </div>
 
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <Input
+                          placeholder="Company"
+                          value={billingAddress.company}
+                        />
+                        <Input
+                          placeholder="Email"
+                          value={billingAddress.email}
+                        />
+                      </div>
 
-<div className="grid md:grid-cols-2 gap-6">
-  <Input placeholder="Company" value={billingAddress.company} />
-  <Input placeholder="Email" value={billingAddress.email} />
-</div>
+                      <div className="space-y-4"></div>
 
-<div className="space-y-4">
-  <Input placeholder="Address Line 1" value={billingAddress.address1} />
-  <Input placeholder="Address Line 2" value={billingAddress.address2} />
-</div>
-
-<div className="grid md:grid-cols-3 gap-6">
-  <Input placeholder="City" value={billingAddress.city} />
-  <Input placeholder="State" value={billingAddress.state} />
-  <Input placeholder="Postal Code" value={billingAddress.postalCode} />
-</div>
+                      <div className="grid md:grid-cols-3 gap-6">
+                        <Input placeholder="City" value={billingAddress.city} />
+                        <Input
+                          placeholder="State"
+                          value={billingAddress.state}
+                        />
+                        <Input
+                          placeholder="Postal Code"
+                          value={billingAddress.postalCode}
+                        />
+                      </div>
 
                       {isEditingShipping && (
                         <Button
@@ -914,8 +1066,6 @@ export function UserProfilePage({
                 </div>
               </CardContent>
             </Card>
-
-
           </div>
         </div>
       </main>

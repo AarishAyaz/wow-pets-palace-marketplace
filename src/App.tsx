@@ -28,8 +28,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import CheckoutPage from "./components/CheckoutPage";
 import { AuthProvider } from "./context/AuthContext";
 import GoogleOneTap from "./components/GoogleOneTap";
-import ProfilePage from "./components/Profile";
 import { UserProfilePage } from "./components/ProfileN";
+import {CartCheckoutPage} from "./components/CheckoutN";
 
 function Home() {
   return (
@@ -84,7 +84,7 @@ export default function App() {
                 path="/checkout"
                 element={
                   <ProtectedRoute>
-                    <CheckoutPage />
+                    <CartCheckoutPage />
                   </ProtectedRoute>
                 }
               />

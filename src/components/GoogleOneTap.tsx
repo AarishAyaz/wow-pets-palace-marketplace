@@ -47,7 +47,7 @@ export default function GoogleOneTap() {
     const handleCredentialResponse = async (response: any) => {
       try {
         const res = await axios.post(
-          `${import.meta.env.VITE_APP_BASE_URL}/authUser/auth/google`,
+          `${import.meta.env.VITE_API_BASE_URL}/authUser/auth/google`,
           { token: response.credential },
           { headers: { "Content-Type": "application/json" } }
         );
