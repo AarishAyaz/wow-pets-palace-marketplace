@@ -30,6 +30,7 @@ import { AuthProvider } from "./context/AuthContext";
 import GoogleOneTap from "./components/GoogleOneTap";
 import { UserProfilePage } from "./components/ProfileN";
 import {CartCheckoutPage} from "./components/CheckoutN";
+import { Toaster } from "react-hot-toast";
 
 function Home() {
   return (
@@ -71,6 +72,7 @@ export default function App() {
       <AuthProvider>
         <CartProvider>
           <GoogleOneTap />
+          <Toaster position="top-right" />
           <Layout>
             <Routes>
               <Route path="/" element={<Home />} />

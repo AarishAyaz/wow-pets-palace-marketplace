@@ -39,8 +39,10 @@ import {
   DialogFooter,
 } from "./ui/dialog";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import axios from "axios";
+import {toast} from "react-hot-toast";
+
 
 interface UserProfilePageProps {
   onNavigateHome?: () => void;
@@ -84,10 +86,127 @@ export function UserProfilePage({
     appleId: "",
     aboutMe: "",
   });
-  const updateProfile = async (data: any) => {
+    // Address state
+  const [sameAsShipping, setSameAsShipping] = useState(true);
+  const [billingAddress, setBillingAddress] = useState({
+    company: "",
+    address1: "",
+    address2: "",
+    country: "",
+    state: "",
+    city: "",
+    postalCode: "",
+    email: "",
+    phone: "",
+  });
+  const [shippingAddress, setShippingAddress] = useState({
+    firstName: "",
+    lastName: "",
+    company: "",
+    address1: "",
+    address2: "",
+    country: "",
+    state: "",
+    city: "",
+    postalCode: "",
+    email: "",
+    phone: "",
+  });
+  const [isEditingBilling, setIsEditingBilling] = useState(false);
+  const [isEditingShipping, setIsEditingShipping] = useState(false);
+
+  // Password dialog state
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    current: "",
+    new: "",
+    confirm: "",
+  });
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  // Recent orders
+  const recentOrders: Order[] = [
+    {
+      id: "ORD-2024-001",
+      date: "March 28, 2026",
+      status: "delivered",
+      total: 149.97,
+      items: 3,
+    },
+    {
+      id: "ORD-2024-002",
+      date: "April 1, 2026",
+      status: "shipped",
+      total: 89.99,
+      items: 2,
+    },
+    {
+      id: "ORD-2024-003",
+      date: "April 2, 2026",
+      status: "processing",
+      total: 199.98,
+      items: 4,
+    },
+  ];
+
+ useEffect(() => {
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+  if (user?.data) {
+    const data = user.data;
+
+    setProfileData({
+      firstName: data.firstName || "",
+      lastName: data.lastName || "",
+      bio: data.user_about_me || "",
+      phone: data.phoneNumber || "",
+      email: data.email || "",
+      status: data.status || "",
+      deviceType: data.devicetype || "",
+      userType: data.user_type || "",
+      isVerified: !!data.isVerified,
+      isShopAdmin: !!data.is_shop_admin,
+      facebookId: data.facebook_id || "",
+      googleId: data.google_id || "",
+      appleId: data.apple_id || "",
+      aboutMe: data.user_about_me || "",
+    });
+
+    setBillingAddress({
+      company: data.billing_company || "",
+      address1: data.billing_address_1 || "",
+      address2: data.billing_address_2 || "",
+      country: data.billing_country || "",
+      state: data.billing_state || "",
+      city: data.billing_city || "",
+      postalCode: data.billing_postal_code || "",
+      email: data.billing_email || "",
+      phone: data.billing_phone || "",
+    });
+
+    setShippingAddress({
+      firstName: data.shipping_first_name || "",
+      lastName: data.shipping_last_name || "",
+      company: data.shipping_company || "",
+      address1: data.shipping_address_1 || "",
+      address2: data.shipping_address_2 || "",
+      country: data.shipping_country || "",
+      state: data.shipping_state || "",
+      city: data.shipping_city || "",
+      postalCode: data.shipping_postal_code || "",
+      email: data.shipping_email || "",
+      phone: data.shipping_phone || "",
+    });
+  }
+}, []);
+
+
+const updateProfile = async (data: any) => {
     try {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
-      const response = await axios.patch(`https://www.wowpetspalace.com/test/authUser/updateProfile`, data, {
+      const response = await axios.patch("https://www.wowpetspalace.com/test/authUser/updateProfile", data, {
         headers: {
           Authorization: `Bearer ${user.auth_token}`,
         },
@@ -157,70 +276,7 @@ export function UserProfilePage({
     };
   };
 
-  // Address state
-  const [sameAsShipping, setSameAsShipping] = useState(true);
-  const [billingAddress, setBillingAddress] = useState({
-    company: "",
-    address1: "",
-    address2: "",
-    country: "",
-    state: "",
-    city: "",
-    postalCode: "",
-    email: "",
-    phone: "",
-  });
-  const [shippingAddress, setShippingAddress] = useState({
-    firstName: "",
-    lastName: "",
-    company: "",
-    address1: "",
-    address2: "",
-    country: "",
-    state: "",
-    city: "",
-    postalCode: "",
-    email: "",
-    phone: "",
-  });
-  const [isEditingBilling, setIsEditingBilling] = useState(false);
-  const [isEditingShipping, setIsEditingShipping] = useState(false);
 
-  // Password dialog state
-  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
-  const [passwordData, setPasswordData] = useState({
-    current: "",
-    new: "",
-    confirm: "",
-  });
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  // Recent orders
-  const recentOrders: Order[] = [
-    {
-      id: "ORD-2024-001",
-      date: "March 28, 2026",
-      status: "delivered",
-      total: 149.97,
-      items: 3,
-    },
-    {
-      id: "ORD-2024-002",
-      date: "April 1, 2026",
-      status: "shipped",
-      total: 89.99,
-      items: 2,
-    },
-    {
-      id: "ORD-2024-003",
-      date: "April 2, 2026",
-      status: "processing",
-      total: 199.98,
-      items: 4,
-    },
-  ];
 
   const handleProfileImageUpload = () => {
     // Mock image upload
@@ -239,28 +295,50 @@ export function UserProfilePage({
       setLoading(true);
       const payload = buildPayload();
 
-      await updateProfile(payload);
+      const res = await updateProfile(payload);
+      localStorage.setItem("user", JSON.stringify(res));
       setIsEditingProfile(false);
 
-      alert("Profile Updated Successfully!");
+      toast.success("Profile Updated Successfully!");
     } catch (error) {
       console.error(error);
-      alert("Something went wrong");
+      toast.error("Something went wrong");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSaveBillingAddress = () => {
-    setIsEditingBilling(false);
-    alert("Billing address updated successfully!");
+  const handleSaveBillingAddress = async () => {
+    try {
+      setLoading(true);
+      const payload = buildPayload();
+
+      await updateProfile(payload);
+      setIsEditingBilling(false);
+
+      toast.success("Billing address updated successfully!")
+    } catch (error) {
+      toast.error("Failed to updated billing address");
+    } finally{
+      setLoading(false);
+    }
   };
 
-  const handleSaveShippingAddress = () => {
+const handleSaveShippingAddress = async () => {
+  try {
+    setLoading(true);
+    const payload = buildPayload();
+
+    await updateProfile(payload);
+
     setIsEditingShipping(false);
-    alert("Shipping address updated successfully!");
-  };
-
+    toast.success("Shipping address updated successfully!");
+  } catch (error) {
+    toast.error("Failed to update shipping address");
+  } finally {
+    setLoading(false);
+  }
+};
   const handleChangePassword = () => {
     if (passwordData.new !== passwordData.confirm) {
       alert("New passwords do not match!");
@@ -759,36 +837,6 @@ export function UserProfilePage({
                         className="pl-10 rounded-xl border-primary/30 focus:border-primary disabled:opacity-70"
                       />
                     </div>
-                    {/* Additional Fields */}
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div>
-                        <Label>Status</Label>
-                        <Input
-                          value={profileData.status}
-                          onChange={(e) =>
-                            setProfileData({
-                              ...profileData,
-                              status: e.target.value,
-                            })
-                          }
-                          disabled={!isEditingProfile}
-                        />
-                      </div>
-
-                      <div>
-                        <Label>User Type</Label>
-                        <Input
-                          value={profileData.userType}
-                          onChange={(e) =>
-                            setProfileData({
-                              ...profileData,
-                              userType: e.target.value,
-                            })
-                          }
-                          disabled={!isEditingProfile}
-                        />
-                      </div>
-                    </div>
                   </div>
 
                   {isEditingProfile && (
@@ -872,6 +920,9 @@ export function UserProfilePage({
                       <Input
                         placeholder="Address Line 2"
                         value={billingAddress.address2}
+                        onChange={(e)=>{
+                          setBillingAddress({...billingAddress, address2: e.target.value})
+                        }}
                       />
                     </div>
                     <div className="space-y-2">
@@ -901,17 +952,24 @@ export function UserProfilePage({
                         value={billingAddress.company}
                         onChange={(e)=> setBillingAddress({...billingAddress, company: e.target.value})}
                       />
-                      <Input placeholder="Email" value={billingAddress.email} />
+                      <Input placeholder="Email" value={billingAddress.email} onChange={(e)=>setBillingAddress({...billingAddress, email: e.target.value})}/>
                     </div>
 
                     <div className="space-y-4"></div>
 
                     <div className="grid md:grid-cols-3 gap-6">
-                      <Input placeholder="City" value={billingAddress.city} />
-                      <Input placeholder="State" value={billingAddress.state} />
+                      <Input placeholder="City" value={billingAddress.city} onChange={(e)=>
+                        setBillingAddress({...billingAddress, city: e.target.value})
+                      } />
+                      <Input placeholder="State" value={billingAddress.state} onChange={(e)=>{
+                        setBillingAddress({...billingAddress, state: e.target.value})
+                      }} />
                       <Input
                         placeholder="Postal Code"
                         value={billingAddress.postalCode}
+                        onChange={(e)=>{
+                          setBillingAddress({...billingAddress, postalCode: e.target.value})
+                        }}
                       />
                     </div>
 
@@ -995,7 +1053,10 @@ export function UserProfilePage({
                         />
                         <Input
                           placeholder="Address Line 2"
-                          value={billingAddress.address2}
+                          value={shippingAddress.address2}
+                          onChange={(e)=>{
+                            setShippingAddress({...shippingAddress, address2: e.target.value })
+                          }}
                         />
                       </div>
                       <div className="space-y-2">
@@ -1023,10 +1084,16 @@ export function UserProfilePage({
                         <Input
                           placeholder="Company"
                           value={shippingAddress.company}
+                          onChange={(e)=>{
+                            setShippingAddress({...shippingAddress, company: e.target.value })
+                          }}
                         />
                         <Input
                           placeholder="Email"
                           value={shippingAddress.email}
+                          onChange={(e)=>{
+                            setShippingAddress({...shippingAddress, email: e.target.value})
+                          }}
                         />
                       </div>
 
@@ -1037,10 +1104,16 @@ export function UserProfilePage({
                         <Input
                           placeholder="State"
                           value={shippingAddress.state}
+                          onChange={(e)=>{
+                            setShippingAddress({...shippingAddress, state: e.target.value})
+                          }}
                         />
                         <Input
                           placeholder="Postal Code"
                           value={shippingAddress.postalCode}
+                          onChange={(e)=>{
+                            setShippingAddress({...shippingAddress, postalCode: e.target.value})
+                          }}
                         />
                       </div>
 

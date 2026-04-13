@@ -221,7 +221,7 @@ export function CartCheckoutPage({
           </Card>
         ) : (
           /* Cart with Items */
-          <div className="grid lg:grid-cols-3 gap-8">
+          <div className="grid lg:grid-cols-2 gap-8">
             {/* Left Column - Cart Items & Checkout Form */}
             <div className="lg:col-span-2 space-y-8">
               {/* Cart Items Section */}
@@ -788,7 +788,6 @@ export function CartCheckoutPage({
         )}
       </main>
 
-      <Footer />
     </div>
   );
 }
