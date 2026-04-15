@@ -149,9 +149,7 @@ export function UserProfilePage({
       items: 4,
     },
   ];
-
-  useEffect(() => {
-    const fetchProfile = async () => {
+ const fetchProfile = async () => {
       try {
         const user = JSON.parse(localStorage.getItem("user") || "{}");
 
@@ -217,6 +215,7 @@ export function UserProfilePage({
         toast.error("Failed to fetch profile");
       }
     };
+  useEffect(() => {
 
     fetchProfile();
   }, []);
@@ -340,6 +339,7 @@ export function UserProfilePage({
       const payload = buildPayload();
 
       const res = await updateProfile(payload);
+      // await fetchProfile();
       localStorage.setItem("user", JSON.stringify(res.data.data));
       setIsEditingProfile(false);
 
