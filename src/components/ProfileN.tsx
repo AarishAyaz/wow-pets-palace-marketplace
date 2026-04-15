@@ -39,10 +39,9 @@ import {
   DialogFooter,
 } from "./ui/dialog";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
-import {toast} from "react-hot-toast";
-
+import { toast } from "react-hot-toast";
 
 interface UserProfilePageProps {
   onNavigateHome?: () => void;
@@ -86,7 +85,7 @@ export function UserProfilePage({
     appleId: "",
     aboutMe: "",
   });
-    // Address state
+  // Address state
   const [sameAsShipping, setSameAsShipping] = useState(true);
   const [billingAddress, setBillingAddress] = useState({
     company: "",
@@ -151,66 +150,89 @@ export function UserProfilePage({
     },
   ];
 
- useEffect(() => {
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-  if (user?.data) {
-    const data = user.data;
+        if (!user?.auth_token || !user?.id) {
+          console.log("Missing token or user ID");
+          return;
+        }
 
-    setProfileData({
-      firstName: data.firstName || "",
-      lastName: data.lastName || "",
-      bio: data.user_about_me || "",
-      phone: data.phoneNumber || "",
-      email: data.email || "",
-      status: data.status || "",
-      deviceType: data.devicetype || "",
-      userType: data.user_type || "",
-      isVerified: !!data.isVerified,
-      isShopAdmin: !!data.is_shop_admin,
-      facebookId: data.facebook_id || "",
-      googleId: data.google_id || "",
-      appleId: data.apple_id || "",
-      aboutMe: data.user_about_me || "",
-    });
+        const res = await axios.get(
+          `https://www.wowpetspalace.com/test/authUser/appusersbyid/${user.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${user.auth_token}`,
+            },
+          },
+        );
 
-    setBillingAddress({
-      company: data.billing_company || "",
-      address1: data.billing_address_1 || "",
-      address2: data.billing_address_2 || "",
-      country: data.billing_country || "",
-      state: data.billing_state || "",
-      city: data.billing_city || "",
-      postalCode: data.billing_postal_code || "",
-      email: data.billing_email || "",
-      phone: data.billing_phone || "",
-    });
+        const data = res.data.data;
 
-    setShippingAddress({
-      firstName: data.shipping_first_name || "",
-      lastName: data.shipping_last_name || "",
-      company: data.shipping_company || "",
-      address1: data.shipping_address_1 || "",
-      address2: data.shipping_address_2 || "",
-      country: data.shipping_country || "",
-      state: data.shipping_state || "",
-      city: data.shipping_city || "",
-      postalCode: data.shipping_postal_code || "",
-      email: data.shipping_email || "",
-      phone: data.shipping_phone || "",
-    });
-  }
-}, []);
+        setProfileData({
+          firstName: data.firstName || "",
+          lastName: data.lastName || "",
+          bio: data.user_about_me || "",
+          phone: data.phoneNumber || "",
+          email: data.email || "",
+          status: data.status || "",
+          deviceType: data.devicetype || "",
+          userType: data.user_type || "",
+          isVerified: !!data.isVerified,
+          isShopAdmin: !!data.is_shop_admin,
+          facebookId: data.facebook_id || "",
+          googleId: data.google_id || "",
+          appleId: data.apple_id || "",
+          aboutMe: data.user_about_me || "",
+        });
 
+        setBillingAddress({
+          company: data.billing_company || "",
+          address1: data.billing_address_1 || "",
+          address2: data.billing_address_2 || "",
+          country: data.billing_country || "",
+          state: data.billing_state || "",
+          city: data.billing_city || "",
+          postalCode: data.billing_postal_code || "",
+          email: data.billing_email || "",
+          phone: data.billing_phone || "",
+        });
 
-const updateProfile = async (data: any) => {
+        setShippingAddress({
+          firstName: data.shipping_first_name || "",
+          lastName: data.shipping_last_name || "",
+          company: data.shipping_company || "",
+          address1: data.shipping_address_1 || "",
+          address2: data.shipping_address_2 || "",
+          country: data.shipping_country || "",
+          state: data.shipping_state || "",
+          city: data.shipping_city || "",
+          postalCode: data.shipping_postal_code || "",
+          email: data.shipping_email || "",
+          phone: data.shipping_phone || "",
+        });
+      } catch (err) {
+        toast.error("Failed to fetch profile");
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  const updateProfile = async (data: any) => {
     try {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
-      const response = await axios.patch("https://www.wowpetspalace.com/test/authUser/updateProfile", data, {
-        headers: {
-          Authorization: `Bearer ${user.auth_token}`,
+      const response = await axios.patch(
+        "https://www.wowpetspalace.com/test/authUser/updateProfile",
+        data,
+        {
+          headers: {
+            Authorization: `Bearer ${user.auth_token}`,
+          },
         },
-      });
+      );
       return response.data;
     } catch (error: any) {
       console.error(
@@ -276,27 +298,49 @@ const updateProfile = async (data: any) => {
     };
   };
 
+  const handleProfileImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
 
+      const file = e.target.files?.[0];
+      if (!file) return;
 
-  const handleProfileImageUpload = () => {
-    // Mock image upload
-    const mockImages = [
-      "https://images.unsplash.com/photo-1599566150163-29194dcaad36?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
-    ];
-    const randomImage =
-      mockImages[Math.floor(Math.random() * mockImages.length)];
-    setProfileImage(randomImage);
+      const formData = new FormData();
+      formData.append("user_profile_photo", file);
+
+      const res = await axios.patch(
+        "https://www.wowpetspalace.com/test/authUser/updateProfile",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${user.auth_token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        },
+      );
+
+      const imageUrl = res.data?.data?.user_profile_photo;
+
+      if (imageUrl) {
+        setProfileImage(`https://www.wowpetspalace.com/test/${imageUrl}`);
+      }
+
+      // ✅ update local storage properly
+      localStorage.setItem("user", JSON.stringify(res.data.data));
+
+      toast.success("Image updated");
+    } catch (err) {
+      console.error(err);
+      toast.error("Upload failed");
+    }
   };
-
   const handleSaveProfile = async () => {
     try {
       setLoading(true);
       const payload = buildPayload();
 
       const res = await updateProfile(payload);
-      localStorage.setItem("user", JSON.stringify(res));
+      localStorage.setItem("user", JSON.stringify(res.data.data));
       setIsEditingProfile(false);
 
       toast.success("Profile Updated Successfully!");
@@ -316,29 +360,29 @@ const updateProfile = async (data: any) => {
       await updateProfile(payload);
       setIsEditingBilling(false);
 
-      toast.success("Billing address updated successfully!")
+      toast.success("Billing address updated successfully!");
     } catch (error) {
       toast.error("Failed to updated billing address");
-    } finally{
+    } finally {
       setLoading(false);
     }
   };
 
-const handleSaveShippingAddress = async () => {
-  try {
-    setLoading(true);
-    const payload = buildPayload();
+  const handleSaveShippingAddress = async () => {
+    try {
+      setLoading(true);
+      const payload = buildPayload();
 
-    await updateProfile(payload);
+      await updateProfile(payload);
 
-    setIsEditingShipping(false);
-    toast.success("Shipping address updated successfully!");
-  } catch (error) {
-    toast.error("Failed to update shipping address");
-  } finally {
-    setLoading(false);
-  }
-};
+      setIsEditingShipping(false);
+      toast.success("Shipping address updated successfully!");
+    } catch (error) {
+      toast.error("Failed to update shipping address");
+    } finally {
+      setLoading(false);
+    }
+  };
   const handleChangePassword = () => {
     if (passwordData.new !== passwordData.confirm) {
       alert("New passwords do not match!");
@@ -356,6 +400,7 @@ const handleSaveShippingAddress = async () => {
 
   const handleLogout = () => {
     if (confirm("Are you sure you want to logout?")) {
+      localStorage.removeItem("user");
       alert("Logged out successfully!");
       if (onNavigateHome) onNavigateHome();
     }
@@ -427,12 +472,16 @@ const handleSaveShippingAddress = async () => {
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    <button
-                      onClick={handleProfileImageUpload}
-                      className=" absolute bottom-0 right-0 w-10 h-10 rounded-full bg-gradient-to-r from-primary to-secondary text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
-                    >
-                      <Camera className="w-5 h-5 " />
-                    </button>
+                    <label className="absolute bottom-0 right-0 w-10 h-10 rounded-full bg-gradient-to-r from-primary to-secondary text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform cursor-pointer">
+                      <Camera className="w-5 h-5" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleProfileImageUpload}
+                        className="hidden"
+                        disabled={!isEditingProfile}
+                      />
+                    </label>
                   </div>
 
                   {/* User Info */}
@@ -553,7 +602,7 @@ const handleSaveShippingAddress = async () => {
                                 current: e.target.value,
                               })
                             }
-                            className="h-11 rouded-lg pr-10"
+                            className="h-11 rounded-lg pr-10"
                           />
                           <button
                             type="button"
@@ -920,8 +969,11 @@ const handleSaveShippingAddress = async () => {
                       <Input
                         placeholder="Address Line 2"
                         value={billingAddress.address2}
-                        onChange={(e)=>{
-                          setBillingAddress({...billingAddress, address2: e.target.value})
+                        onChange={(e) => {
+                          setBillingAddress({
+                            ...billingAddress,
+                            address2: e.target.value,
+                          });
                         }}
                       />
                     </div>
@@ -950,25 +1002,56 @@ const handleSaveShippingAddress = async () => {
                       <Input
                         placeholder="Company"
                         value={billingAddress.company}
-                        onChange={(e)=> setBillingAddress({...billingAddress, company: e.target.value})}
+                        onChange={(e) =>
+                          setBillingAddress({
+                            ...billingAddress,
+                            company: e.target.value,
+                          })
+                        }
                       />
-                      <Input placeholder="Email" value={billingAddress.email} onChange={(e)=>setBillingAddress({...billingAddress, email: e.target.value})}/>
+                      <Input
+                        placeholder="Email"
+                        value={billingAddress.email}
+                        onChange={(e) =>
+                          setBillingAddress({
+                            ...billingAddress,
+                            email: e.target.value,
+                          })
+                        }
+                      />
                     </div>
 
                     <div className="space-y-4"></div>
 
                     <div className="grid md:grid-cols-3 gap-6">
-                      <Input placeholder="City" value={billingAddress.city} onChange={(e)=>
-                        setBillingAddress({...billingAddress, city: e.target.value})
-                      } />
-                      <Input placeholder="State" value={billingAddress.state} onChange={(e)=>{
-                        setBillingAddress({...billingAddress, state: e.target.value})
-                      }} />
+                      <Input
+                        placeholder="City"
+                        value={billingAddress.city}
+                        onChange={(e) =>
+                          setBillingAddress({
+                            ...billingAddress,
+                            city: e.target.value,
+                          })
+                        }
+                      />
+                      <Input
+                        placeholder="State"
+                        value={billingAddress.state}
+                        onChange={(e) => {
+                          setBillingAddress({
+                            ...billingAddress,
+                            state: e.target.value,
+                          });
+                        }}
+                      />
                       <Input
                         placeholder="Postal Code"
                         value={billingAddress.postalCode}
-                        onChange={(e)=>{
-                          setBillingAddress({...billingAddress, postalCode: e.target.value})
+                        onChange={(e) => {
+                          setBillingAddress({
+                            ...billingAddress,
+                            postalCode: e.target.value,
+                          });
                         }}
                       />
                     </div>
@@ -1000,8 +1083,8 @@ const handleSaveShippingAddress = async () => {
                         <Checkbox
                           id="sameAsShipping"
                           checked={sameAsShipping}
-                          onCheckedChange={(checked) =>
-                            setSameAsShipping(checked as boolean)
+                          onCheckedChange={(checked: boolean) =>
+                            setSameAsShipping(checked === true)
                           }
                         />
                         <Label
@@ -1054,8 +1137,11 @@ const handleSaveShippingAddress = async () => {
                         <Input
                           placeholder="Address Line 2"
                           value={shippingAddress.address2}
-                          onChange={(e)=>{
-                            setShippingAddress({...shippingAddress, address2: e.target.value })
+                          onChange={(e) => {
+                            setShippingAddress({
+                              ...shippingAddress,
+                              address2: e.target.value,
+                            });
                           }}
                         />
                       </div>
@@ -1084,15 +1170,21 @@ const handleSaveShippingAddress = async () => {
                         <Input
                           placeholder="Company"
                           value={shippingAddress.company}
-                          onChange={(e)=>{
-                            setShippingAddress({...shippingAddress, company: e.target.value })
+                          onChange={(e) => {
+                            setShippingAddress({
+                              ...shippingAddress,
+                              company: e.target.value,
+                            });
                           }}
                         />
                         <Input
                           placeholder="Email"
                           value={shippingAddress.email}
-                          onChange={(e)=>{
-                            setShippingAddress({...shippingAddress, email: e.target.value})
+                          onChange={(e) => {
+                            setShippingAddress({
+                              ...shippingAddress,
+                              email: e.target.value,
+                            });
                           }}
                         />
                       </div>
@@ -1100,19 +1192,34 @@ const handleSaveShippingAddress = async () => {
                       <div className="space-y-4"></div>
 
                       <div className="grid md:grid-cols-3 gap-6">
-                        <Input placeholder="City" value={billingAddress.city} />
+                        <Input
+                          placeholder="City"
+                          value={shippingAddress.city}
+                          onChange={(e) =>
+                            setShippingAddress({
+                              ...shippingAddress,
+                              city: e.target.value,
+                            })
+                          }
+                        />
                         <Input
                           placeholder="State"
                           value={shippingAddress.state}
-                          onChange={(e)=>{
-                            setShippingAddress({...shippingAddress, state: e.target.value})
+                          onChange={(e) => {
+                            setShippingAddress({
+                              ...shippingAddress,
+                              state: e.target.value,
+                            });
                           }}
                         />
                         <Input
                           placeholder="Postal Code"
                           value={shippingAddress.postalCode}
-                          onChange={(e)=>{
-                            setShippingAddress({...shippingAddress, postalCode: e.target.value})
+                          onChange={(e) => {
+                            setShippingAddress({
+                              ...shippingAddress,
+                              postalCode: e.target.value,
+                            });
                           }}
                         />
                       </div>
@@ -1144,8 +1251,6 @@ const handleSaveShippingAddress = async () => {
           </div>
         </div>
       </main>
-
-      {/* <Footer /> */}
     </div>
   );
 }
