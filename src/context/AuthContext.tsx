@@ -26,10 +26,23 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }: any) => {
   const [user, setUser] = useState<user | null>(null);
 
-  useEffect(() => {
+useEffect(() => {
+  try {
     const storedUser = localStorage.getItem("user");
-    if (storedUser) setUser(JSON.parse(storedUser));
-  }, []);
+
+    if (!storedUser || storedUser === "undefined") {
+      setUser(null);
+      return;
+    }
+
+    const parsedUser = JSON.parse(storedUser);
+    setUser(parsedUser);
+  } catch (error) {
+    console.error("Invalid user in localStorage:", error);
+    localStorage.removeItem("user"); // cleanup corrupted data
+    setUser(null);
+  }
+}, []);
 
   return (
     <AuthContext.Provider

@@ -2,10 +2,10 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
 export default function ProtectedRoute({ children }: any) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const location = useLocation();
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !user) {
     return (
       <Navigate
         to={`/login?redirect=${location.pathname}`}

@@ -40,9 +40,10 @@ export function Header() {
 
   const displayName = user?.firstName || user?.email ||"User";
 
-  const avatarUrl = user?.user_profile_photo && user.user_profile_photo !== "default.png"
-  ? `/authUser/${user.user_profile_photo}`
-  : null;
+ const avatarUrl =
+  user?.user_profile_photo && user.user_profile_photo !== "default.png"
+    ? `https://www.wowpetspalace.com/test/${user.user_profile_photo}`
+    : null;
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 shadow-sm">
       <div className="container mx-auto px-4">

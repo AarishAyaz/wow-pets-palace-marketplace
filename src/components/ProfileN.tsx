@@ -42,6 +42,7 @@ import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
+import API from "./api";
 
 interface UserProfilePageProps {
   onNavigateHome?: () => void;
@@ -150,90 +151,84 @@ export function UserProfilePage({
     },
   ];
   const fetchProfile = async () => {
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-    if (!user?.auth_token) return;
-
-    const res = await axios.get(
-      `https://www.wowpetspalace.com/test/authUser/fetchprofile`,
-      {
+      const token = user?.authToken?.auth_token || user?.auth_token;
+      const res = await API.get(`/authUser/fetchprofile`, {
         headers: {
-          Authorization: `Bearer ${user.auth_token}`,
+          Authorization: `Bearer ${token}`,
         },
+      });
+
+      const data = res.data.data;
+
+      setProfileData({
+        firstName: data.firstName || "",
+        lastName: data.lastName || "",
+        bio: data.user_about_me || "",
+        phone: data.phoneNumber || "",
+        email: data.email || "",
+        status: data.status || "",
+        deviceType: data.devicetype || "",
+        userType: data.user_type || "",
+        isVerified: !!data.isVerified,
+        isShopAdmin: !!data.is_shop_admin,
+        facebookId: data.facebook_id || "",
+        googleId: data.google_id || "",
+        appleId: data.apple_id || "",
+        aboutMe: data.user_about_me || "",
+      });
+
+      setBillingAddress({
+        company: data.billing_company || "",
+        address1: data.billing_address_1 || "",
+        address2: data.billing_address_2 || "",
+        country: data.billing_country || "",
+        state: data.billing_state || "",
+        city: data.billing_city || "",
+        postalCode: data.billing_postal_code || "",
+        email: data.billing_email || "",
+        phone: data.billing_phone || "",
+      });
+
+      setShippingAddress({
+        firstName: data.shipping_first_name || "",
+        lastName: data.shipping_last_name || "",
+        company: data.shipping_company || "",
+        address1: data.shipping_address_1 || "",
+        address2: data.shipping_address_2 || "",
+        country: data.shipping_country || "",
+        state: data.shipping_state || "",
+        city: data.shipping_city || "",
+        postalCode: data.shipping_postal_code || "",
+        email: data.shipping_email || "",
+        phone: data.shipping_phone || "",
+      });
+
+      // ✅ Fix image
+      if (data.user_profile_photo) {
+        setProfileImage(
+          `https://www.wowpetspalace.com/test/${data.user_profile_photo}`,
+        );
       }
-    );
 
-    const data = res.data.data;
-
-    setProfileData({
-      firstName: data.firstName || "",
-      lastName: data.lastName || "",
-      bio: data.user_about_me || "",
-      phone: data.phoneNumber || "",
-      email: data.email || "",
-      status: data.status || "",
-      deviceType: data.devicetype || "",
-      userType: data.user_type || "",
-      isVerified: !!data.isVerified,
-      isShopAdmin: !!data.is_shop_admin,
-      facebookId: data.facebook_id || "",
-      googleId: data.google_id || "",
-      appleId: data.apple_id || "",
-      aboutMe: data.user_about_me || "",
-
-      
-    });
-
-    setBillingAddress({
-      company: data.billing_company || "",
-      address1: data.billing_address_1 || "",
-      address2: data.billing_address_2 || "",
-      country: data.billing_country || "",
-      state: data.billing_state || "",
-      city: data.billing_city || "",
-      postalCode: data.billing_postal_code || "",
-      email: data.billing_email || "",
-      phone: data.billing_phone || "",
-    });
-
-    setShippingAddress({
-      firstName: data.shipping_first_name || "",
-      lastName: data.shipping_last_name || "",
-      company: data.shipping_company || "",
-      address1: data.shipping_address_1 || "",
-      address2: data.shipping_address_2 || "",
-      country: data.shipping_country || "", 
-      state: data.shipping_state || "",
-      city: data.shipping_city || "",
-      postalCode: data.shipping_postal_code || "",
-      email: data.shipping_email || "",
-      phone: data.shipping_phone || "",
-    })
-
-    // ✅ Fix image
-    if (data.user_profile_photo) {
-      setProfileImage(
-        `https://www.wowpetspalace.com/test/${data.user_profile_photo}`
+      // ✅ IMPORTANT: sync localStorage
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          ...user,
+          ...data,
+        }),
       );
+    } catch (err) {
+      toast.error("Failed to fetch profile");
+    } finally {
+      setLoading(false);
     }
-
-    // ✅ IMPORTANT: sync localStorage
-    localStorage.setItem(
-      "user",
-      JSON.stringify({
-        ...user,
-        ...data,
-      })
-    );
-  } catch (err) {
-    toast.error("Failed to fetch profile");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
   useEffect(() => {
     fetchProfile();
   }, []);
@@ -241,15 +236,12 @@ export function UserProfilePage({
   const updateProfile = async (data: any) => {
     try {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
-      const response = await axios.patch(
-        "https://www.wowpetspalace.com/test/authUser/updateProfile",
-        data,
-        {
-          headers: {
-            Authorization: `Bearer ${user.auth_token}`,
-          },
+      const token = user?.authToken?.auth_token || user?.auth_token;
+      const response = await API.patch("/authUser/updateProfile", data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
       return response.data;
     } catch (error: any) {
       console.error(
@@ -326,17 +318,15 @@ export function UserProfilePage({
 
       const formData = new FormData();
       formData.append("user_profile_photo", file);
+      const token =
+        existingUser?.authToken?.auth_token || existingUser?.auth_token;
 
-      const res = await axios.patch(
-        "https://www.wowpetspalace.com/test/authUser/updateProfile",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${existingUser.auth_token}`,
-            "Content-Type": "multipart/form-data",
-          },
+      const res = await API.patch("/authUser/updateProfile", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
         },
-      );
+      });
 
       const imageUrl = res.data?.data?.user_profile_photo;
 
