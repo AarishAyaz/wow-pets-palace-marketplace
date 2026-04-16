@@ -150,6 +150,9 @@ export function UserProfilePage({
       items: 4,
     },
   ];
+
+  //https://wowpetspalace.com/test/authUser/getCountries 
+  //product/v2/getAllOrder
   const fetchProfile = async () => {
     try {
       setLoading(true);
