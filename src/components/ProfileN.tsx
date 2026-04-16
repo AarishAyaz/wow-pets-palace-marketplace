@@ -70,11 +70,11 @@ export function UserProfilePage({
   );
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileData, setProfileData] = useState({
-    firstName: "John",
-    lastName: "Doe",
-    bio: "Pet lover and proud owner of 2 dogs and 1 cat. Always looking for the best products for my furry friends!",
-    phone: "+1 (555) 123-4567",
-    email: "john.doe@example.com",
+    firstName: "",
+    lastName: "",
+    bio: "",
+    phone: "",
+    email: "",
     status: "",
     deviceType: "",
     userType: "",
@@ -149,74 +149,92 @@ export function UserProfilePage({
       items: 4,
     },
   ];
- const fetchProfile = async () => {
-      try {
-        const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const fetchProfile = async () => {
+  try {
+    setLoading(true);
 
-        if (!user?.auth_token || !user?.id) {
-          console.log("Missing token or user ID");
-          return;
-        }
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-        const res = await axios.get(
-          `https://www.wowpetspalace.com/test/authUser/appusersbyid/${user.id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${user.auth_token}`,
-            },
-          },
-        );
+    if (!user?.auth_token) return;
 
-        const data = res.data.data;
-
-        setProfileData({
-          firstName: data.firstName || "",
-          lastName: data.lastName || "",
-          bio: data.user_about_me || "",
-          phone: data.phoneNumber || "",
-          email: data.email || "",
-          status: data.status || "",
-          deviceType: data.devicetype || "",
-          userType: data.user_type || "",
-          isVerified: !!data.isVerified,
-          isShopAdmin: !!data.is_shop_admin,
-          facebookId: data.facebook_id || "",
-          googleId: data.google_id || "",
-          appleId: data.apple_id || "",
-          aboutMe: data.user_about_me || "",
-        });
-
-        setBillingAddress({
-          company: data.billing_company || "",
-          address1: data.billing_address_1 || "",
-          address2: data.billing_address_2 || "",
-          country: data.billing_country || "",
-          state: data.billing_state || "",
-          city: data.billing_city || "",
-          postalCode: data.billing_postal_code || "",
-          email: data.billing_email || "",
-          phone: data.billing_phone || "",
-        });
-
-        setShippingAddress({
-          firstName: data.shipping_first_name || "",
-          lastName: data.shipping_last_name || "",
-          company: data.shipping_company || "",
-          address1: data.shipping_address_1 || "",
-          address2: data.shipping_address_2 || "",
-          country: data.shipping_country || "",
-          state: data.shipping_state || "",
-          city: data.shipping_city || "",
-          postalCode: data.shipping_postal_code || "",
-          email: data.shipping_email || "",
-          phone: data.shipping_phone || "",
-        });
-      } catch (err) {
-        toast.error("Failed to fetch profile");
+    const res = await axios.get(
+      `https://www.wowpetspalace.com/test/authUser/fetchprofile`,
+      {
+        headers: {
+          Authorization: `Bearer ${user.auth_token}`,
+        },
       }
-    };
-  useEffect(() => {
+    );
 
+    const data = res.data.data;
+
+    setProfileData({
+      firstName: data.firstName || "",
+      lastName: data.lastName || "",
+      bio: data.user_about_me || "",
+      phone: data.phoneNumber || "",
+      email: data.email || "",
+      status: data.status || "",
+      deviceType: data.devicetype || "",
+      userType: data.user_type || "",
+      isVerified: !!data.isVerified,
+      isShopAdmin: !!data.is_shop_admin,
+      facebookId: data.facebook_id || "",
+      googleId: data.google_id || "",
+      appleId: data.apple_id || "",
+      aboutMe: data.user_about_me || "",
+
+      
+    });
+
+    setBillingAddress({
+      company: data.billing_company || "",
+      address1: data.billing_address_1 || "",
+      address2: data.billing_address_2 || "",
+      country: data.billing_country || "",
+      state: data.billing_state || "",
+      city: data.billing_city || "",
+      postalCode: data.billing_postal_code || "",
+      email: data.billing_email || "",
+      phone: data.billing_phone || "",
+    });
+
+    setShippingAddress({
+      firstName: data.shipping_first_name || "",
+      lastName: data.shipping_last_name || "",
+      company: data.shipping_company || "",
+      address1: data.shipping_address_1 || "",
+      address2: data.shipping_address_2 || "",
+      country: data.shipping_country || "", 
+      state: data.shipping_state || "",
+      city: data.shipping_city || "",
+      postalCode: data.shipping_postal_code || "",
+      email: data.shipping_email || "",
+      phone: data.shipping_phone || "",
+    })
+
+    // ✅ Fix image
+    if (data.user_profile_photo) {
+      setProfileImage(
+        `https://www.wowpetspalace.com/test/${data.user_profile_photo}`
+      );
+    }
+
+    // ✅ IMPORTANT: sync localStorage
+    localStorage.setItem(
+      "user",
+      JSON.stringify({
+        ...user,
+        ...data,
+      })
+    );
+  } catch (err) {
+    toast.error("Failed to fetch profile");
+  } finally {
+    setLoading(false);
+  }
+};
+  useEffect(() => {
     fetchProfile();
   }, []);
 
@@ -297,9 +315,11 @@ export function UserProfilePage({
     };
   };
 
-  const handleProfileImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProfileImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     try {
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const existingUser = JSON.parse(localStorage.getItem("user") || "{}");
 
       const file = e.target.files?.[0];
       if (!file) return;
@@ -312,7 +332,7 @@ export function UserProfilePage({
         formData,
         {
           headers: {
-            Authorization: `Bearer ${user.auth_token}`,
+            Authorization: `Bearer ${existingUser.auth_token}`,
             "Content-Type": "multipart/form-data",
           },
         },
@@ -325,8 +345,13 @@ export function UserProfilePage({
       }
 
       // ✅ update local storage properly
-      localStorage.setItem("user", JSON.stringify(res.data.data));
-
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          ...existingUser,
+          ...res.data,
+        }),
+      );
       toast.success("Image updated");
     } catch (err) {
       console.error(err);
@@ -340,7 +365,15 @@ export function UserProfilePage({
 
       const res = await updateProfile(payload);
       // await fetchProfile();
-      localStorage.setItem("user", JSON.stringify(res.data.data));
+      const existingUser = JSON.parse(localStorage.getItem("user") || "{}");
+
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          ...existingUser,
+          ...res.data,
+        }),
+      );
       setIsEditingProfile(false);
 
       toast.success("Profile Updated Successfully!");
