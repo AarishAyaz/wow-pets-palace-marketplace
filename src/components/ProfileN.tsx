@@ -40,7 +40,6 @@ import {
 } from "./ui/dialog";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useState, useEffect } from "react";
-import axios from "axios";
 import { toast } from "react-hot-toast";
 import API from "./api";
 
@@ -92,7 +91,7 @@ export function UserProfilePage({
     company: "",
     address1: "",
     address2: "",
-    country: "",
+    country: "" as number | "",
     state: "",
     city: "",
     postalCode: "",
@@ -105,7 +104,7 @@ export function UserProfilePage({
     company: "",
     address1: "",
     address2: "",
-    country: "",
+    country: "" as number | "",
     state: "",
     city: "",
     postalCode: "",
@@ -126,32 +125,69 @@ export function UserProfilePage({
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  // Recent orders
-  const recentOrders: Order[] = [
-    {
-      id: "ORD-2024-001",
-      date: "March 28, 2026",
-      status: "delivered",
-      total: 149.97,
-      items: 3,
-    },
-    {
-      id: "ORD-2024-002",
-      date: "April 1, 2026",
-      status: "shipped",
-      total: 89.99,
-      items: 2,
-    },
-    {
-      id: "ORD-2024-003",
-      date: "April 2, 2026",
-      status: "processing",
-      total: 199.98,
-      items: 4,
-    },
-  ];
+  const [orders, setOrders] = useState<Order[]>([]);
+  const mapOrderStatus = (status: string): Order["status"] => {
+    switch(status?.toLowerCase()){
+      case "pending": 
+      case "processing":
+        return "processing";
 
-  //https://wowpetspalace.com/test/authUser/getCountries 
+      case "shipped":
+        return "shipped";
+
+      case "completed":
+      case "delivered":
+        return "delivered";
+      default:
+        return "processing";
+    }
+  }
+  const fetchOrders = async ()=>{
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+      const token = user?.authToken?.auth_token || user?.auth_token;
+
+      if(!token){
+        console.error("No token found");
+        return;
+      }
+
+      const res = await API.get("/product/v2/getAllOrders", {
+        headers:{
+          Authorization: `Bearer${token}`,
+        },
+      });
+      const apiOrders = res.data?.data || [];
+
+      const formattedOrders: Order[] = apiOrders.map((o:any) =>({
+        id: o.order_id || o.id,
+        date: new Date(o.created_at).toLocaleDateString(),
+        status: mapOrderStatus(o.status),
+        total: Number(o.total_amount || 0),
+        items: o.total_items || o.items?.length || 0,
+      }));
+      setOrders(formattedOrders);
+    } catch (error) {
+      console.error("Failed to fetch orders", error);
+      toast.error("Failed to fetch orders");
+    }
+  }
+
+ 
+  const [countries, setCountries] = useState<any[]>([]);
+
+  const fetchCountries = async () => {
+    try {
+      const res = await API.get("/authUser/getCountries");
+      setCountries(res.data.data || []);
+    } catch (error) {
+      console.error("Failed to fetch Countries", error);
+      toast.error("Failed to fetch countries");
+    }
+  };
+
+  //https://wowpetspalace.com/test/authUser/getCountries
   //product/v2/getAllOrder
   const fetchProfile = async () => {
     try {
@@ -189,7 +225,7 @@ export function UserProfilePage({
         company: data.billing_company || "",
         address1: data.billing_address_1 || "",
         address2: data.billing_address_2 || "",
-        country: data.billing_country || "",
+        country: Number(data.billing_country) || "",
         state: data.billing_state || "",
         city: data.billing_city || "",
         postalCode: data.billing_postal_code || "",
@@ -203,7 +239,7 @@ export function UserProfilePage({
         company: data.shipping_company || "",
         address1: data.shipping_address_1 || "",
         address2: data.shipping_address_2 || "",
-        country: data.shipping_country || "",
+        country: Number(data.shipping_country) || "",
         state: data.shipping_state || "",
         city: data.shipping_city || "",
         postalCode: data.shipping_postal_code || "",
@@ -234,6 +270,8 @@ export function UserProfilePage({
   };
   useEffect(() => {
     fetchProfile();
+    fetchCountries();
+    fetchOrders();
   }, []);
 
   const updateProfile = async (data: any) => {
@@ -771,7 +809,10 @@ export function UserProfilePage({
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {recentOrders.map((order) => (
+                {orders.length === 0 ? (
+                  <p className="text0center text-muted-foreground">No Orders found!</p>
+                ) : (
+                   orders.map((order) => (
                   <div
                     key={order.id}
                     className="p-5 rounded-xl border bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
@@ -810,7 +851,9 @@ export function UserProfilePage({
                       </div>
                     </div>
                   </div>
-                ))}
+                )))}
+                
+               
 
                 <Button
                   variant="outline"
@@ -1010,24 +1053,32 @@ export function UserProfilePage({
                       >
                         Country
                       </Label>
-                      <Input
-                        id="billingCountry"
-                        value={billingAddress.country}
+                      <select
+                        name="countrydropdown"
+                        value={billingAddress.country || ""}
                         onChange={(e) =>
                           setBillingAddress({
                             ...billingAddress,
-                            country: e.target.value,
+                            country: Number(e.target.value), //store ID
                           })
                         }
                         disabled={!isEditingBilling}
-                        className="rounded-xl border-primary/30 focus:border-primary disabled:opacity-70 disabled:bg-muted/20"
-                      />
+                        className="w-full rounded-xl border px-3 py-2"
+                      >
+                        <option value="">Select Country</option>
+                        {countries.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-6">
                       <Input
                         placeholder="Company"
                         value={billingAddress.company}
+                        disabled={!isEditingBilling}
                         onChange={(e) =>
                           setBillingAddress({
                             ...billingAddress,
@@ -1038,6 +1089,7 @@ export function UserProfilePage({
                       <Input
                         placeholder="Email"
                         value={billingAddress.email}
+                        disabled={!isEditingBilling}
                         onChange={(e) =>
                           setBillingAddress({
                             ...billingAddress,
@@ -1053,6 +1105,7 @@ export function UserProfilePage({
                       <Input
                         placeholder="City"
                         value={billingAddress.city}
+                        disabled={!isEditingBilling}
                         onChange={(e) =>
                           setBillingAddress({
                             ...billingAddress,
@@ -1063,6 +1116,7 @@ export function UserProfilePage({
                       <Input
                         placeholder="State"
                         value={billingAddress.state}
+                        disabled={!isEditingBilling}
                         onChange={(e) => {
                           setBillingAddress({
                             ...billingAddress,
@@ -1073,6 +1127,7 @@ export function UserProfilePage({
                       <Input
                         placeholder="Postal Code"
                         value={billingAddress.postalCode}
+                        disabled={!isEditingBilling}
                         onChange={(e) => {
                           setBillingAddress({
                             ...billingAddress,
@@ -1151,18 +1206,19 @@ export function UserProfilePage({
                           placeholder="Address Line 1"
                           rows={2}
                           value={shippingAddress.address1}
+                          disabled={!isEditingShipping}
                           onChange={(e) =>
                             setShippingAddress({
                               ...shippingAddress,
                               address1: e.target.value,
                             })
                           }
-                          disabled={!isEditingShipping}
                           className="flex min-h-[80px] w-full rounded-md border border-input bg-input-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         />
                         <Input
                           placeholder="Address Line 2"
                           value={shippingAddress.address2}
+                          disabled={!isEditingShipping}
                           onChange={(e) => {
                             setShippingAddress({
                               ...shippingAddress,
@@ -1178,24 +1234,32 @@ export function UserProfilePage({
                         >
                           Country
                         </Label>
-                        <Input
-                          id="shippingCountry"
-                          value={shippingAddress.country}
+                        <select
+                          name="countrydropdown"
+                          value={shippingAddress.country || ""}
+                          disabled={!isEditingShipping}
                           onChange={(e) =>
                             setShippingAddress({
                               ...shippingAddress,
-                              country: e.target.value,
+                              country: Number(e.target.value), //store ID
                             })
                           }
-                          disabled={!isEditingShipping}
-                          className="rounded-xl border-primary/30 focus:border-primary disabled:opacity-70 disabled:bg-muted/20"
-                        />
+                          className="w-full rounded-xl border px-3 py-2"
+                        >
+                          <option value="">Select Country</option>
+                          {countries.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.name}
+                            </option>
+                          ))}
+                        </select>
                       </div>
 
                       <div className="grid md:grid-cols-2 gap-6">
                         <Input
                           placeholder="Company"
                           value={shippingAddress.company}
+                          disabled={!isEditingShipping}
                           onChange={(e) => {
                             setShippingAddress({
                               ...shippingAddress,
@@ -1206,6 +1270,7 @@ export function UserProfilePage({
                         <Input
                           placeholder="Email"
                           value={shippingAddress.email}
+                          disabled={!isEditingShipping}
                           onChange={(e) => {
                             setShippingAddress({
                               ...shippingAddress,
@@ -1221,6 +1286,7 @@ export function UserProfilePage({
                         <Input
                           placeholder="City"
                           value={shippingAddress.city}
+                          disabled={!isEditingShipping}
                           onChange={(e) =>
                             setShippingAddress({
                               ...shippingAddress,
@@ -1231,6 +1297,7 @@ export function UserProfilePage({
                         <Input
                           placeholder="State"
                           value={shippingAddress.state}
+                          disabled={!isEditingShipping}
                           onChange={(e) => {
                             setShippingAddress({
                               ...shippingAddress,
@@ -1241,6 +1308,7 @@ export function UserProfilePage({
                         <Input
                           placeholder="Postal Code"
                           value={shippingAddress.postalCode}
+                          disabled={!isEditingShipping}
                           onChange={(e) => {
                             setShippingAddress({
                               ...shippingAddress,
