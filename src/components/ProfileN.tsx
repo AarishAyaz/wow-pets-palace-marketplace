@@ -91,7 +91,8 @@ export function UserProfilePage({
     company: "",
     address1: "",
     address2: "",
-    country: "" as number | "",
+    country: "",
+    countryId: "" as number | "",
     state: "",
     city: "",
     postalCode: "",
@@ -104,7 +105,7 @@ export function UserProfilePage({
     company: "",
     address1: "",
     address2: "",
-    country: "" as number | "",
+    country: "",
     state: "",
     city: "",
     postalCode: "",
@@ -127,8 +128,8 @@ export function UserProfilePage({
   const [loading, setLoading] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
   const mapOrderStatus = (status: string): Order["status"] => {
-    switch(status?.toLowerCase()){
-      case "pending": 
+    switch (status?.toLowerCase()) {
+      case "pending":
       case "processing":
         return "processing";
 
@@ -141,26 +142,26 @@ export function UserProfilePage({
       default:
         return "processing";
     }
-  }
-  const fetchOrders = async ()=>{
+  };
+  const fetchOrders = async () => {
     try {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
 
       const token = user?.authToken?.auth_token || user?.auth_token;
 
-      if(!token){
+      if (!token) {
         console.error("No token found");
         return;
       }
 
-      const res = await API.get("/product/v2/getAllOrders", {
-        headers:{
-          Authorization: `Bearer${token}`,
+      const res = await API.get("/product/v2/getAllOrder", {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
       });
       const apiOrders = res.data?.data || [];
 
-      const formattedOrders: Order[] = apiOrders.map((o:any) =>({
+      const formattedOrders: Order[] = apiOrders.map((o: any) => ({
         id: o.order_id || o.id,
         date: new Date(o.created_at).toLocaleDateString(),
         status: mapOrderStatus(o.status),
@@ -172,9 +173,8 @@ export function UserProfilePage({
       console.error("Failed to fetch orders", error);
       toast.error("Failed to fetch orders");
     }
-  }
+  };
 
- 
   const [countries, setCountries] = useState<any[]>([]);
 
   const fetchCountries = async () => {
@@ -225,7 +225,8 @@ export function UserProfilePage({
         company: data.billing_company || "",
         address1: data.billing_address_1 || "",
         address2: data.billing_address_2 || "",
-        country: Number(data.billing_country) || "",
+        country: data.billing_country || "",
+        countryId: data.country_id ? Number(data.country_id) : "",
         state: data.billing_state || "",
         city: data.billing_city || "",
         postalCode: data.billing_postal_code || "",
@@ -239,13 +240,60 @@ export function UserProfilePage({
         company: data.shipping_company || "",
         address1: data.shipping_address_1 || "",
         address2: data.shipping_address_2 || "",
-        country: Number(data.shipping_country) || "",
+        country: data.shipping_country || "",
         state: data.shipping_state || "",
         city: data.shipping_city || "",
         postalCode: data.shipping_postal_code || "",
         email: data.shipping_email || "",
         phone: data.shipping_phone || "",
       });
+
+      const normalize = (val: any) =>
+        (val || "").toString().trim().toLowerCase();
+
+      const billing = {
+        address1: normalize(data.billing_address_1),
+        address2: normalize(data.billing_address_2),
+        city: normalize(data.billing_city),
+        state: normalize(data.billing_state),
+        country: normalize(data.billing_country),
+        postalCode: normalize(data.billing_postal_code),
+        email: normalize(data.billing_email),
+        phone: normalize(data.billing_phone),
+        company: normalize(data.billing_company),
+      };
+
+      const shipping = {
+        address1: normalize(data.shipping_address_1),
+        address2: normalize(data.shipping_address_2),
+        city: normalize(data.shipping_city),
+        state: normalize(data.shipping_state),
+        country: normalize(data.shipping_country),
+        postalCode: normalize(data.shipping_postal_code),
+        email: normalize(data.shipping_email),
+        phone: normalize(data.shipping_phone),
+        company: normalize(data.shipping_company),
+      };
+      const isBillingEmpty = Object.values(billing).every((v) => !v);
+      const isShippingEmpty = Object.values(shipping).every((v) => !v);
+
+      const isSame = Object.keys(billing).every(
+        (key) =>
+          billing[key as keyof typeof billing] ===
+          shipping[key as keyof typeof shipping],
+      );
+      billing.address1 === shipping.address1 &&
+        billing.address2 === shipping.address2 &&
+        billing.city === shipping.city &&
+        billing.state === shipping.state &&
+        billing.country === shipping.country &&
+        billing.postalCode === shipping.postalCode;
+
+      if (isBillingEmpty && isShippingEmpty) {
+        setSameAsShipping(true);
+      } else {
+        setSameAsShipping(isSame);
+      }
 
       // ✅ Fix image
       if (data.user_profile_photo) {
@@ -259,7 +307,7 @@ export function UserProfilePage({
         "user",
         JSON.stringify({
           ...user,
-          ...data,
+          ...res.data.data,
         }),
       );
     } catch (err) {
@@ -317,6 +365,7 @@ export function UserProfilePage({
       billing_postal_code: billingAddress.postalCode,
       billing_email: billingAddress.email,
       billing_phone: billingAddress.phone,
+      country_id: billingAddress.countryId,
 
       shipping_company: sameAsShipping
         ? billingAddress.company
@@ -810,50 +859,51 @@ export function UserProfilePage({
               </CardHeader>
               <CardContent className="space-y-4">
                 {orders.length === 0 ? (
-                  <p className="text0center text-muted-foreground">No Orders found!</p>
+                  <p className="text0center text-muted-foreground">
+                    No Orders found!
+                  </p>
                 ) : (
-                   orders.map((order) => (
-                  <div
-                    key={order.id}
-                    className="p-5 rounded-xl border bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center gap-3 flex-wrap">
-                          <p className="text-foreground">{order.id}</p>
-                          <Badge
-                            className={`px-3 py-1 rounded-full text-xs capitalize ${getOrderStatusColor(
-                              order.status,
-                            )}`}
-                          >
-                            {getOrderStatusIcon(order.status)}
-                            {order.status}
-                          </Badge>
+                  orders.map((order) => (
+                    <div
+                      key={order.id}
+                      className="p-5 rounded-xl border bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <p className="text-foreground">{order.id}</p>
+                            <Badge
+                              className={`px-3 py-1 rounded-full text-xs capitalize ${getOrderStatusColor(
+                                order.status,
+                              )}`}
+                            >
+                              {getOrderStatusIcon(order.status)}
+                              {order.status}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {order.date}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {order.items} {order.items === 1 ? "item" : "items"}
+                          </p>
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                          {order.date}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {order.items} {order.items === 1 ? "item" : "items"}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-secondary">
-                          ${order.total.toFixed(2)}
-                        </p>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="mt-2 text-primary hover:text-primary/80"
-                        >
-                          Track Order
-                        </Button>
+                        <div className="text-right">
+                          <p className="text-secondary">
+                            ${order.total.toFixed(2)}
+                          </p>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="mt-2 text-primary hover:text-primary/80"
+                          >
+                            Track Order
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )))}
-                
-               
+                  ))
+                )}
 
                 <Button
                   variant="outline"
@@ -940,7 +990,7 @@ export function UserProfilePage({
                       Phone Number
                     </Label>
                     <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                      {/* <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" /> */}
                       <Input
                         id="phone"
                         type="tel"
@@ -1054,16 +1104,20 @@ export function UserProfilePage({
                         Country
                       </Label>
                       <select
-                        name="countrydropdown"
-                        value={billingAddress.country || ""}
-                        onChange={(e) =>
+                        className="w-full rounded-xl border px-3 py-2"
+                        value={billingAddress.countryId || ""}
+                        disabled={!isEditingBilling}
+                        onChange={(e) => {
+                          const selected = countries.find(
+                            (c) => c.id == e.target.value,
+                          );
+
                           setBillingAddress({
                             ...billingAddress,
-                            country: Number(e.target.value), //store ID
-                          })
-                        }
-                        disabled={!isEditingBilling}
-                        className="w-full rounded-xl border px-3 py-2"
+                            countryId: Number(e.target.value), // ID for API
+                            country: selected?.name || "", // Name for UI
+                          });
+                        }}
                       >
                         <option value="">Select Country</option>
                         {countries.map((c) => (
@@ -1164,9 +1218,50 @@ export function UserProfilePage({
                         <Checkbox
                           id="sameAsShipping"
                           checked={sameAsShipping}
-                          onCheckedChange={(checked: boolean) =>
-                            setSameAsShipping(checked === true)
-                          }
+                          onCheckedChange={(checked) => {
+                            const isChecked = !!checked;
+                            setSameAsShipping(isChecked);
+
+                            if (isChecked) {
+                              const updatedShipping = {
+                                firstName: "",
+                                lastName: "",
+                                company: billingAddress.company,
+                                address1: billingAddress.address1,
+                                address2: billingAddress.address2,
+                                country: billingAddress.country,
+                                state: billingAddress.state,
+                                city: billingAddress.city,
+                                postalCode: billingAddress.postalCode,
+                                email: billingAddress.email,
+                                phone: billingAddress.phone,
+                              };
+
+                              setShippingAddress(updatedShipping);
+
+                              // ✅ build payload using billing directly (NOT state)
+                              const payload = {
+                                ...buildPayload(),
+                                shipping_company: billingAddress.company,
+                                shipping_address_1: billingAddress.address1,
+                                shipping_address_2: billingAddress.address2,
+                                shipping_country: billingAddress.country,
+                                shipping_state: billingAddress.state,
+                                shipping_city: billingAddress.city,
+                                shipping_postal_code: billingAddress.postalCode,
+                                shipping_email: billingAddress.email,
+                                shipping_phone: billingAddress.phone,
+                              };
+
+                              updateProfile(payload)
+                                .then(() =>
+                                  toast.success("Shipping synced with billing"),
+                                )
+                                .catch(() =>
+                                  toast.error("Failed to sync shipping"),
+                                );
+                            }
+                          }}
                         />
                         <Label
                           htmlFor="sameAsShipping"
@@ -1235,20 +1330,19 @@ export function UserProfilePage({
                           Country
                         </Label>
                         <select
-                          name="countrydropdown"
-                          value={shippingAddress.country || ""}
+                          className="w-full rounded-xl border px-3 py-2"
                           disabled={!isEditingShipping}
-                          onChange={(e) =>
+                          value={shippingAddress.country || ""}
+                          onChange={(e) => {
                             setShippingAddress({
                               ...shippingAddress,
-                              country: Number(e.target.value), //store ID
-                            })
-                          }
-                          className="w-full rounded-xl border px-3 py-2"
+                              country: e.target.value, // Name for UI
+                            });
+                          }}
                         >
                           <option value="">Select Country</option>
                           {countries.map((c) => (
-                            <option key={c.id} value={c.id}>
+                            <option key={c.id} value={c.name}>
                               {c.name}
                             </option>
                           ))}
