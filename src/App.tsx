@@ -22,15 +22,13 @@ import { ProductsPage } from "./components/ProductsPage";
 import { ProductDetailsPage } from "./components/ProductDetails";
 import { LoginPage } from "./components/LoginPage";
 import { SignupPage } from "./components/SignupPage";
-import CartPage from "./components/CartPage";
 import { CartProvider } from "./context/CartContext";
 import ProtectedRoute from "./components/ProtectedRoute";
-import CheckoutPage from "./components/CheckoutPage";
 import { AuthProvider } from "./context/AuthContext";
 import GoogleOneTap from "./components/GoogleOneTap";
 import { UserProfilePage } from "./components/ProfileN";
-import {CartCheckoutPage} from "./components/CheckoutN";
 import { Toaster } from "react-hot-toast";
+import CartCheckoutWrapper from "./components/CartCheckoutWrapper";
 
 function Home() {
   return (
@@ -80,17 +78,16 @@ export default function App() {
               <Route path="/product/:slug" element={<ProductDetailsPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
-              <Route path="/cart" element={<CartPage />} />
               <Route path="/profile" element={
                 <ProtectedRoute>
                    <UserProfilePage />
                 </ProtectedRoute>
               }/>
               <Route
-                path="/checkout"
+                path="/cart"
                 element={
                   <ProtectedRoute>
-                    <CartCheckoutPage />
+                    <CartCheckoutWrapper />
                   </ProtectedRoute>
                 }
               />

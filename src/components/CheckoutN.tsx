@@ -15,20 +15,19 @@ import {
   ChevronRight,
   Lock,
   Check,
-  X
-} from 'lucide-react';
-import { Header } from './Header';
-import { Footer } from './Footer';
-import { Button } from './ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Separator } from './ui/separator';
-import { Badge } from './ui/badge';
-import { RadioGroup, RadioGroupItem } from './ui/radio-group';
-import { Checkbox } from './ui/checkbox';
-import { ImageWithFallback } from './figma/ImageWithFallback';
-import { useState } from 'react';
+  X,
+} from "lucide-react";
+import { Button } from "./ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Separator } from "./ui/separator";
+import { Badge } from "./ui/badge";
+import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
+import { Checkbox } from "./ui/checkbox";
+import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface CartItem {
   id: string;
@@ -51,74 +50,78 @@ export function CartCheckoutPage({
   onNavigateHome,
   onNavigateToProducts,
   cartItems,
-  onUpdateCart
+  onUpdateCart,
 }: CartCheckoutPageProps) {
-  const [promoCode, setPromoCode] = useState('');
+  const [promoCode, setPromoCode] = useState("");
   const [promoApplied, setPromoApplied] = useState(false);
   const [discount, setDiscount] = useState(0);
-  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [paymentMethod, setPaymentMethod] = useState("card");
   const [sameAsBilling, setSameAsBilling] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+  const navigate = useNavigate();
 
   // Form states
   const [billingDetails, setBillingDetails] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-    country: '',
-    address: ''
+    fullName: "",
+    email: "",
+    phone: "",
+    country: "",
+    address: "",
   });
 
   const [shippingDetails, setShippingDetails] = useState({
-    fullName: '',
-    address: '',
-    country: ''
+    fullName: "",
+    address: "",
+    country: "",
   });
 
   const [cardDetails, setCardDetails] = useState({
-    cardNumber: '',
-    expiry: '',
-    cvv: ''
+    cardNumber: "",
+    expiry: "",
+    cvv: "",
   });
 
   // Related products
   const relatedProducts = [
     {
-      id: '101',
-      name: 'Premium Dog Leash',
+      id: "101",
+      name: "Premium Dog Leash",
       price: 24.99,
       image:
-        'https://images.unsplash.com/photo-1596822316110-288c7b8f24f8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400',
-      rating: 4.6
+        "https://images.unsplash.com/photo-1596822316110-288c7b8f24f8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+      rating: 4.6,
     },
     {
-      id: '102',
-      name: 'Pet Grooming Kit',
+      id: "102",
+      name: "Pet Grooming Kit",
       price: 34.99,
       image:
-        'https://images.unsplash.com/photo-1625279138876-8910c2af9a30?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400',
-      rating: 4.7
+        "https://images.unsplash.com/photo-1625279138876-8910c2af9a30?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+      rating: 4.7,
     },
     {
-      id: '103',
-      name: 'Pet Water Fountain',
+      id: "103",
+      name: "Pet Water Fountain",
       price: 39.99,
       image:
-        'https://images.unsplash.com/photo-1747918266318-61b6b9a24a20?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400',
-      rating: 4.5
+        "https://images.unsplash.com/photo-1747918266318-61b6b9a24a20?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+      rating: 4.5,
     },
     {
-      id: '104',
-      name: 'Organic Pet Treats',
+      id: "104",
+      name: "Organic Pet Treats",
       price: 16.99,
       image:
-        'https://images.unsplash.com/photo-1761660306229-8f99a11ef623?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400',
-      rating: 4.8
-    }
+        "https://images.unsplash.com/photo-1761660306229-8f99a11ef623?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+      rating: 4.8,
+    },
   ];
 
   // Calculate totals
-  const subtotal = 0;
+  const subtotal = cartItems.reduce(
+    (acc, item) => acc + item.price * item.quantity,
+    0,
+  );
   const shippingCharge = subtotal > 75 ? 0 : 9.99;
   const discountAmount = promoApplied ? subtotal * discount : 0;
   const total = subtotal + shippingCharge - discountAmount;
@@ -126,7 +129,7 @@ export function CartCheckoutPage({
   const updateQuantity = (itemId: string, newQuantity: number) => {
     if (newQuantity < 1) return;
     const updatedItems = cartItems.map((item) =>
-      item.id === itemId ? { ...item, quantity: newQuantity } : item
+      item.id === itemId ? { ...item, quantity: newQuantity } : item,
     );
     onUpdateCart(updatedItems);
   };
@@ -138,27 +141,31 @@ export function CartCheckoutPage({
 
   const applyPromoCode = () => {
     // Mock promo code validation
-    if (promoCode.toUpperCase() === 'WOWPETS10') {
+    if (promoCode.toUpperCase() === "WOWPETS10") {
       setPromoApplied(true);
       setDiscount(0.1); // 10% discount
-    } else if (promoCode.toUpperCase() === 'SAVE20') {
+    } else if (promoCode.toUpperCase() === "SAVE20") {
       setPromoApplied(true);
       setDiscount(0.2); // 20% discount
     } else {
-      alert('Invalid promo code');
+      alert("Invalid promo code");
     }
   };
 
   const removePromoCode = () => {
     setPromoApplied(false);
     setDiscount(0);
-    setPromoCode('');
+    setPromoCode("");
   };
 
   const handlePlaceOrder = () => {
     // Basic validation
-    if (!billingDetails.fullName || !billingDetails.email || !billingDetails.phone) {
-      alert('Please fill in all required billing details');
+    if (
+      !billingDetails.fullName ||
+      !billingDetails.email ||
+      !billingDetails.phone
+    ) {
+      alert("Please fill in all required billing details");
       return;
     }
 
@@ -166,7 +173,9 @@ export function CartCheckoutPage({
     // Simulate order processing
     setTimeout(() => {
       setIsProcessing(false);
-      alert('Order placed successfully! Thank you for shopping at Wow Pets Palace.');
+      alert(
+        "Order placed successfully! Thank you for shopping at Wow Pets Palace.",
+      );
       // Clear cart
       onUpdateCart([]);
       if (onNavigateHome) onNavigateHome();
@@ -199,7 +208,7 @@ export function CartCheckoutPage({
           </p>
         </div>
 
-        { 0 ? (
+        {cartItems.length === 0 ? (
           /* Empty Cart State */
           <Card className="max-w-2xl mx-auto rounded-3xl border-0 shadow-xl">
             <CardContent className="p-12 text-center space-y-6">
@@ -225,7 +234,6 @@ export function CartCheckoutPage({
             {/* Left Column - Cart Items & Checkout Form */}
             <div className="lg:col-span-2 space-y-8">
               {/* Cart Items Section */}
-             
 
               {/* Billing Details */}
               <Card className="rounded-3xl border-0 shadow-xl">
@@ -254,7 +262,7 @@ export function CartCheckoutPage({
                           onChange={(e) =>
                             setBillingDetails({
                               ...billingDetails,
-                              fullName: e.target.value
+                              fullName: e.target.value,
                             })
                           }
                           className="rounded-xl border-primary/30 focus:border-primary"
@@ -274,7 +282,7 @@ export function CartCheckoutPage({
                             onChange={(e) =>
                               setBillingDetails({
                                 ...billingDetails,
-                                email: e.target.value
+                                email: e.target.value,
                               })
                             }
                             className="pl-10 rounded-xl border-primary/30 focus:border-primary"
@@ -295,7 +303,7 @@ export function CartCheckoutPage({
                             onChange={(e) =>
                               setBillingDetails({
                                 ...billingDetails,
-                                phone: e.target.value
+                                phone: e.target.value,
                               })
                             }
                             className="pl-10 rounded-xl border-primary/30 focus:border-primary"
@@ -315,7 +323,7 @@ export function CartCheckoutPage({
                             onChange={(e) =>
                               setBillingDetails({
                                 ...billingDetails,
-                                country: e.target.value
+                                country: e.target.value,
                               })
                             }
                             className="pl-10 rounded-xl border-primary/30 focus:border-primary"
@@ -324,7 +332,10 @@ export function CartCheckoutPage({
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="billingAddress" className="text-foreground">
+                      <Label
+                        htmlFor="billingAddress"
+                        className="text-foreground"
+                      >
                         Billing Address *
                       </Label>
                       <textarea
@@ -335,7 +346,7 @@ export function CartCheckoutPage({
                         onChange={(e) =>
                           setBillingDetails({
                             ...billingDetails,
-                            address: e.target.value
+                            address: e.target.value,
                           })
                         }
                         className="w-full px-4 py-3 rounded-xl border-2 border-primary/30 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 bg-background resize-none"
@@ -372,7 +383,10 @@ export function CartCheckoutPage({
                     {!sameAsBilling && (
                       <div className="grid md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label htmlFor="shippingName" className="text-foreground">
+                          <Label
+                            htmlFor="shippingName"
+                            className="text-foreground"
+                          >
                             Full Name
                           </Label>
                           <Input
@@ -382,14 +396,17 @@ export function CartCheckoutPage({
                             onChange={(e) =>
                               setShippingDetails({
                                 ...shippingDetails,
-                                fullName: e.target.value
+                                fullName: e.target.value,
                               })
                             }
                             className="rounded-xl border-primary/30 focus:border-primary"
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="shippingCountry" className="text-foreground">
+                          <Label
+                            htmlFor="shippingCountry"
+                            className="text-foreground"
+                          >
                             Country
                           </Label>
                           <Input
@@ -399,7 +416,7 @@ export function CartCheckoutPage({
                             onChange={(e) =>
                               setShippingDetails({
                                 ...shippingDetails,
-                                country: e.target.value
+                                country: e.target.value,
                               })
                             }
                             className="rounded-xl border-primary/30 focus:border-primary"
@@ -420,7 +437,7 @@ export function CartCheckoutPage({
                             onChange={(e) =>
                               setShippingDetails({
                                 ...shippingDetails,
-                                address: e.target.value
+                                address: e.target.value,
                               })
                             }
                             className="w-full px-4 py-3 rounded-xl border-2 border-primary/30 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 bg-background resize-none"
@@ -441,16 +458,19 @@ export function CartCheckoutPage({
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
+                  <RadioGroup
+                    value={paymentMethod}
+                    onValueChange={setPaymentMethod}
+                  >
                     <div className="space-y-3">
                       {/* Credit/Debit Card */}
                       <div
                         className={`flex items-center space-x-4 p-4 rounded-2xl border-2 transition-all cursor-pointer ${
-                          paymentMethod === 'card'
-                            ? 'border-secondary bg-secondary/5'
-                            : 'border-muted hover:border-primary/30'
+                          paymentMethod === "card"
+                            ? "border-secondary bg-secondary/5"
+                            : "border-muted hover:border-primary/30"
                         }`}
-                        onClick={() => setPaymentMethod('card')}
+                        onClick={() => setPaymentMethod("card")}
                       >
                         <RadioGroupItem value="card" id="card" />
                         <div className="flex items-center gap-3 flex-1">
@@ -469,10 +489,13 @@ export function CartCheckoutPage({
                       </div>
 
                       {/* Card Details - Show when card is selected */}
-                      {paymentMethod === 'card' && (
+                      {paymentMethod === "card" && (
                         <div className="ml-4 pl-4 border-l-2 border-secondary space-y-4 py-4">
                           <div className="space-y-2">
-                            <Label htmlFor="cardNumber" className="text-foreground">
+                            <Label
+                              htmlFor="cardNumber"
+                              className="text-foreground"
+                            >
                               Card Number
                             </Label>
                             <Input
@@ -482,7 +505,7 @@ export function CartCheckoutPage({
                               onChange={(e) =>
                                 setCardDetails({
                                   ...cardDetails,
-                                  cardNumber: e.target.value
+                                  cardNumber: e.target.value,
                                 })
                               }
                               className="rounded-xl border-primary/30 focus:border-primary"
@@ -491,7 +514,10 @@ export function CartCheckoutPage({
                           </div>
                           <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                              <Label htmlFor="expiry" className="text-foreground">
+                              <Label
+                                htmlFor="expiry"
+                                className="text-foreground"
+                              >
                                 Expiry Date
                               </Label>
                               <Input
@@ -501,7 +527,7 @@ export function CartCheckoutPage({
                                 onChange={(e) =>
                                   setCardDetails({
                                     ...cardDetails,
-                                    expiry: e.target.value
+                                    expiry: e.target.value,
                                   })
                                 }
                                 className="rounded-xl border-primary/30 focus:border-primary"
@@ -520,7 +546,7 @@ export function CartCheckoutPage({
                                 onChange={(e) =>
                                   setCardDetails({
                                     ...cardDetails,
-                                    cvv: e.target.value
+                                    cvv: e.target.value,
                                   })
                                 }
                                 className="rounded-xl border-primary/30 focus:border-primary"
@@ -534,16 +560,18 @@ export function CartCheckoutPage({
                       {/* PayPal */}
                       <div
                         className={`flex items-center space-x-4 p-4 rounded-2xl border-2 transition-all cursor-pointer ${
-                          paymentMethod === 'paypal'
-                            ? 'border-secondary bg-secondary/5'
-                            : 'border-muted hover:border-primary/30'
+                          paymentMethod === "paypal"
+                            ? "border-secondary bg-secondary/5"
+                            : "border-muted hover:border-primary/30"
                         }`}
-                        onClick={() => setPaymentMethod('paypal')}
+                        onClick={() => setPaymentMethod("paypal")}
                       >
                         <RadioGroupItem value="paypal" id="paypal" />
                         <div className="flex items-center gap-3 flex-1">
                           <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center">
-                            <span className="text-blue-600 font-bold text-lg">P</span>
+                            <span className="text-blue-600 font-bold text-lg">
+                              P
+                            </span>
                           </div>
                           <div>
                             <Label htmlFor="paypal" className="cursor-pointer">
@@ -559,11 +587,11 @@ export function CartCheckoutPage({
                       {/* Cash on Delivery */}
                       <div
                         className={`flex items-center space-x-4 p-4 rounded-2xl border-2 transition-all cursor-pointer ${
-                          paymentMethod === 'cod'
-                            ? 'border-secondary bg-secondary/5'
-                            : 'border-muted hover:border-primary/30'
+                          paymentMethod === "cod"
+                            ? "border-secondary bg-secondary/5"
+                            : "border-muted hover:border-primary/30"
                         }`}
-                        onClick={() => setPaymentMethod('cod')}
+                        onClick={() => setPaymentMethod("cod")}
                       >
                         <RadioGroupItem value="cod" id="cod" />
                         <div className="flex items-center gap-3 flex-1">
@@ -598,8 +626,8 @@ export function CartCheckoutPage({
                         Secure Checkout
                       </h3>
                       <p className="text-sm text-muted-foreground">
-                        Your payment information is encrypted and secure. We never
-                        store your card details.
+                        Your payment information is encrypted and secure. We
+                        never store your card details.
                       </p>
                     </div>
                   </div>
@@ -610,9 +638,70 @@ export function CartCheckoutPage({
             {/* Right Column - Order Summary (Sticky) */}
             <div className="lg:col-span-1">
               <div className="sticky top-24 space-y-6">
+                <Card className="rounded-3xl border-0 shadow-xl ">
+                  <CardHeader>
+                    <CardTitle>Your Items</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {cartItems.map((item) => (
+                      <div key={item.id} className="flex items-center gap-4">
+                        <ImageWithFallback
+                          src={item.image}
+                          alt={item.name}
+                          className="w-16 h-16 rounded object-cover"
+                        />
+
+                        <div className="flex-1">
+                          <p className="font-medium">{item.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            ${item.price} × {item.quantity}
+                          </p>
+                        </div>
+
+                        <p className="text-sm font-semibold text-primary">
+                          ${(item.price * item.quantity).toFixed(2)}
+                        </p>
+
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            className="h-8 w-8"
+                            onClick={() =>
+                              updateQuantity(item.id, item.quantity - 1)
+                            }
+                          >
+                            <Minus className="w-3 h-3" />
+                          </Button>
+
+                          <span>{item.quantity}</span>
+
+                          <Button
+                            size="icon"
+                            onClick={() =>
+                              updateQuantity(item.id, item.quantity + 1)
+                            }
+                          >
+                            <Plus />
+                          </Button>
+                        </div>
+
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          onClick={() => removeItem(item.id)}
+                        >
+                          <Trash2 />
+                        </Button>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
                 <Card className="rounded-3xl border-0 shadow-xl">
                   <CardHeader>
-                    <CardTitle className="text-foreground">Order Summary</CardTitle>
+                    <CardTitle className="text-foreground">
+                      Order Summary
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     {/* Promo Code */}
@@ -677,12 +766,15 @@ export function CartCheckoutPage({
                           )}
                         </span>
                         <span>
-                          {shippingCharge === 0 ? 'FREE' : `$${shippingCharge.toFixed(2)}`}
+                          {shippingCharge === 0
+                            ? "FREE"
+                            : `$${shippingCharge.toFixed(2)}`}
                         </span>
                       </div>
                       {subtotal <= 75 && (
                         <p className="text-xs text-muted-foreground">
-                          Add ${(75 - subtotal).toFixed(2)} more for free shipping!
+                          Add ${(75 - subtotal).toFixed(2)} more for free
+                          shipping!
                         </p>
                       )}
                       {promoApplied && (
@@ -707,7 +799,7 @@ export function CartCheckoutPage({
                     <Button
                       size="lg"
                       onClick={handlePlaceOrder}
-                      disabled={isProcessing ||  0}
+                      disabled={isProcessing || cartItems.length === 0}
                       className="w-full rounded-full bg-gradient-to-r from-primary to-secondary text-white hover:from-primary/90 hover:to-secondary/90 shadow-lg hover:shadow-xl transition-all duration-300 h-14 text-lg"
                     >
                       {isProcessing ? (
@@ -733,11 +825,15 @@ export function CartCheckoutPage({
                       </div>
                       <div className="text-center p-2">
                         <Truck className="w-6 h-6 mx-auto mb-1 text-blue-600" />
-                        <p className="text-xs text-muted-foreground">Fast Delivery</p>
+                        <p className="text-xs text-muted-foreground">
+                          Fast Delivery
+                        </p>
                       </div>
                       <div className="text-center p-2">
                         <Check className="w-6 h-6 mx-auto mb-1 text-primary" />
-                        <p className="text-xs text-muted-foreground">Easy Returns</p>
+                        <p className="text-xs text-muted-foreground">
+                          Easy Returns
+                        </p>
                       </div>
                     </div>
                   </CardContent>
@@ -748,7 +844,7 @@ export function CartCheckoutPage({
         )}
 
         {/* Related Products - Only show when cart has items */}
-        { 0 && (
+        {cartItems.length > 0 && (
           <div className="mt-16">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-foreground">You May Also Like</h2>
@@ -779,7 +875,9 @@ export function CartCheckoutPage({
                     <h3 className="text-sm text-foreground line-clamp-2 min-h-[2.5rem]">
                       {product.name}
                     </h3>
-                    <p className="text-secondary">${product.price.toFixed(2)}</p>
+                    <p className="text-secondary">
+                      ${product.price.toFixed(2)}
+                    </p>
                   </CardContent>
                 </Card>
               ))}
@@ -787,7 +885,6 @@ export function CartCheckoutPage({
           </div>
         )}
       </main>
-
     </div>
   );
 }
