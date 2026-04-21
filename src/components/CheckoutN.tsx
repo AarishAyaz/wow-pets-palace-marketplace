@@ -27,7 +27,7 @@ import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Checkbox } from "./ui/checkbox";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 interface CartItem {
   id: string;
@@ -56,9 +56,8 @@ export function CartCheckoutPage({
   const [promoApplied, setPromoApplied] = useState(false);
   const [discount, setDiscount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState("card");
-  const [sameAsBilling, setSameAsBilling] = useState(true);
+  const [sameAsBilling, setSameAsBilling] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const navigate = useNavigate();
 
   // Form states
   const [billingDetails, setBillingDetails] = useState({
@@ -80,6 +79,7 @@ export function CartCheckoutPage({
     expiry: "",
     cvv: "",
   });
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Related products
   const relatedProducts = [
@@ -117,6 +117,79 @@ export function CartCheckoutPage({
     },
   ];
 
+  useEffect(()=>{
+if(isInitialized){
+  return;
+}
+
+    const storedUser = localStorage.getItem("user");
+
+    if(storedUser){
+      const parsedUser = JSON.parse(storedUser);
+      initializeForm(parsedUser);
+      setIsInitialized(true);
+    }
+  }, [isInitialized]);
+
+  const initializeForm = (userData: any) => {
+    const fullName = 
+    userData.firstName && userData.lastName
+    ? `${userData.firstName} ${userData.lastName}`
+    : userData.firstName || "";
+
+      // Billing
+  const billing = {
+    fullName,
+    email: userData.billing_email || userData.email || "",
+    phone: userData.billing_phone || userData.phoneNumber || "",
+    country: userData.billing_country || "",
+    address: `${userData.billing_address_1 || ""} ${userData.billing_address_2 || ""}`.trim(),
+  };
+
+  // Shipping
+ const shipping = {
+  fullName:
+    userData.shipping_first_name && userData.shipping_last_name
+      ? `${userData.shipping_first_name} ${userData.shipping_last_name}`
+      : fullName,
+
+  country: userData.shipping_country || userData.billing_country || "",
+
+  address: [
+    userData.shipping_address_1,
+    userData.shipping_address_2,
+  ]
+    .filter(Boolean)
+    .join(" ") ||
+    [
+      userData.billing_address_1,
+      userData.billing_address_2,
+    ]
+      .filter(Boolean)
+      .join(" "),
+};
+    setBillingDetails(billing);
+    setShippingDetails(shipping)
+
+const isSame =
+  billing.address.trim().toLowerCase() ===
+    shipping.address.trim().toLowerCase() &&
+  billing.country.trim().toLowerCase() ===
+    shipping.country.trim().toLowerCase();
+
+    setSameAsBilling(isSame);
+  }
+
+  useEffect(()=>{
+    if(!sameAsBilling)
+      return;
+      setShippingDetails({
+        fullName: billingDetails.fullName,
+        address: billingDetails.address,
+        country: billingDetails.country,
+  });
+    
+  }, [ sameAsBilling, billingDetails]);
   // Calculate totals
   const subtotal = cartItems.reduce(
     (acc, item) => acc + item.price * item.quantity,
@@ -156,6 +229,17 @@ export function CartCheckoutPage({
     setPromoApplied(false);
     setDiscount(0);
     setPromoCode("");
+  };
+
+  const handleSameAsBilling = (checked: boolean) => {
+    setSameAsBilling(checked);
+    if(checked){
+      setShippingDetails({
+        fullName: billingDetails.fullName,
+        address: billingDetails.address,
+        country: billingDetails.country,
+      });
+    }
   };
 
   const handlePlaceOrder = () => {
@@ -273,7 +357,6 @@ export function CartCheckoutPage({
                           Email Address *
                         </Label>
                         <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                           <Input
                             id="email"
                             type="email"
@@ -294,7 +377,6 @@ export function CartCheckoutPage({
                           Phone Number *
                         </Label>
                         <div className="relative">
-                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                           <Input
                             id="phone"
                             type="tel"
@@ -315,7 +397,6 @@ export function CartCheckoutPage({
                           Country *
                         </Label>
                         <div className="relative">
-                          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                           <Input
                             id="country"
                             placeholder="United States"
@@ -368,7 +449,7 @@ export function CartCheckoutPage({
                           id="sameAsBilling"
                           checked={sameAsBilling}
                           onCheckedChange={(checked) =>
-                            setSameAsBilling(checked as boolean)
+                            handleSameAsBilling(checked as boolean)
                           }
                         />
                         <Label
@@ -440,7 +521,7 @@ export function CartCheckoutPage({
                                 address: e.target.value,
                               })
                             }
-                            className="w-full px-4 py-3 rounded-xl border-2 border-primary/30 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 bg-background resize-none"
+                        className="w-full px-4 py-3 rounded-xl border-2 border-primary/30 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 bg-background resize-none"
                           />
                         </div>
                       </div>
