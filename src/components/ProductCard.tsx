@@ -17,6 +17,7 @@ interface ProductCardProps {
   rating?: number | null;
   reviewsCount?: number | null;
   category?: string;
+  shipping_cost?: number;
 }
 
 export function ProductCard({
@@ -29,6 +30,7 @@ export function ProductCard({
   rating = 0,
   reviewsCount = 0,
   category,
+  shipping_cost,
 }: ProductCardProps) {
   const navigate = useNavigate();
 
@@ -124,6 +126,7 @@ export function ProductCard({
         price: discountedPrice,
         image,
         quantity: 1,
+        shipping_cost, // Replace with actual shipping cost if available
       })
     }}
     className="mt-auto w-full bg-gradient-to-r from-primary to-primary/80 text-xs lg:text-sm flex items-center  justify-center gap-1">

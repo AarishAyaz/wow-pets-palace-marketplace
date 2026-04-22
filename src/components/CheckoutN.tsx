@@ -32,11 +32,11 @@ import { useEffect } from "react";
 interface CartItem {
   id: string;
   name: string;
-  description: string;
   price: number;
   image: string;
   quantity: number;
   inStock: boolean;
+  shipping_cost: number;
 }
 
 interface CartCheckoutPageProps {
@@ -195,8 +195,10 @@ const isSame =
     (acc, item) => acc + item.price * item.quantity,
     0,
   );
-  const shippingCharge = subtotal > 75 ? 0 : 9.99;
-  const discountAmount = promoApplied ? subtotal * discount : 0;
+const shippingCharge = cartItems.reduce(
+  (acc, item) => acc + item.shipping_cost * item.quantity,
+  0
+);  const discountAmount = promoApplied ? subtotal * discount : 0;
   const total = subtotal + shippingCharge - discountAmount;
 
   const updateQuantity = (itemId: string, newQuantity: number) => {

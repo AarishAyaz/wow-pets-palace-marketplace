@@ -528,6 +528,7 @@ export function ProductDetailsPage() {
         price: Number(discountedPrice),
         image: selectedImage,
         quantity: quantity,
+        shipping_cost: product.shipping_cost || 0,
       })
     }
                 size="lg"
