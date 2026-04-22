@@ -115,7 +115,9 @@ export function ProductCard({
 
     {/* Add to Cart */}
     <Button 
-    onClick={()=>
+    onClick={(e)=>{
+      e.stopPropagation();
+      e.preventDefault();
       addToCart({
         id: slug,
         name,
@@ -123,7 +125,7 @@ export function ProductCard({
         image,
         quantity: 1,
       })
-    }
+    }}
     className="mt-auto w-full bg-gradient-to-r from-primary to-primary/80 text-xs lg:text-sm flex items-center  justify-center gap-1">
       <ShoppingCart className="w-4 h-4 group-hover:scale-110 transition-transform" />
       Add to Cart

@@ -79,9 +79,8 @@ export default function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
               <Route path="/profile" element={
-                <ProtectedRoute>
                    <UserProfilePage />
-                </ProtectedRoute>
+            
               }/>
               <Route
                 path="/cart"

@@ -53,7 +53,7 @@ interface UserProfilePageProps {
 interface Order {
   id: string;
   date: string;
-  status: "processing" | "shipped" | "delivered";
+  statusTitle: "processing" | "shipped" | "delivered";
   total: number;
   items: number;
 }
@@ -127,8 +127,8 @@ export function UserProfilePage({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
-  const mapOrderStatus = (status: string): Order["status"] => {
-    switch (status?.toLowerCase()) {
+  const mapOrderStatus = (statusTitle: string): Order["statusTitle"] => {
+    switch (statusTitle?.toLowerCase()) {
       case "pending":
       case "processing":
         return "processing";
@@ -162,11 +162,11 @@ export function UserProfilePage({
       const apiOrders = res.data?.data || [];
 
       const formattedOrders: Order[] = apiOrders.map((o: any) => ({
-        id: o.order_id || o.id,
-        date: new Date(o.created_at).toLocaleDateString(),
-        status: mapOrderStatus(o.status),
-        total: Number(o.total_amount || 0),
-        items: o.total_items || o.items?.length || 0,
+        id: o.order_no,
+        date: formatOrderDate(o.added_date),
+        statusTitle: mapOrderStatus(o.statusTitle),
+        total: Number(o.total_item_amount || 0),
+        items: o.total_item_count || o.items?.length || 0,
       }));
       setOrders(formattedOrders);
     } catch (error) {
@@ -175,6 +175,25 @@ export function UserProfilePage({
     }
   };
 
+  const formatOrderDate = (dateString: string) => {
+    const orderDate = new Date(dateString.replace(" ", "T"));
+    const now = new Date();
+
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfOrder = new Date(
+      orderDate.getFullYear(),
+      orderDate.getMonth(),
+      orderDate.getDate()
+    )
+    const diffMs = startOfToday.getTime() - startOfOrder.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 *24));
+
+    if(diffDays < 1 ) return "Today";
+    if(diffDays === 1) return "1 day ago";
+    if(diffDays < 7) return `${diffDays} days ago`;
+
+    return orderDate.toLocaleDateString();
+  }
   const [countries, setCountries] = useState<any[]>([]);
 
   const fetchCountries = async () => {
@@ -519,8 +538,8 @@ export function UserProfilePage({
     }
   };
 
-  const getOrderStatusIcon = (status: Order["status"]) => {
-    switch (status) {
+  const getOrderStatusIcon = (statusTitle: Order["statusTitle"]) => {
+    switch (statusTitle) {
       case "processing":
         return <Clock className="w-4 h-4" />;
       case "shipped":
@@ -530,8 +549,8 @@ export function UserProfilePage({
     }
   };
 
-  const getOrderStatusColor = (status: Order["status"]) => {
-    switch (status) {
+  const getOrderStatusColor = (statusTitle: Order["statusTitle"]) => {
+    switch (statusTitle) {
       case "processing":
         return "bg-yellow-100 text-yellow-700 border-yellow-300";
       case "shipped":
@@ -866,7 +885,7 @@ export function UserProfilePage({
                   orders.map((order) => (
                     <div
                       key={order.id}
-                      className="p-5 rounded-xl border bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
+                      className="p-6 rounded-xl border bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 space-y-2">
@@ -874,11 +893,11 @@ export function UserProfilePage({
                             <p className="text-foreground">{order.id}</p>
                             <Badge
                               className={`px-3 py-1 rounded-full text-xs capitalize ${getOrderStatusColor(
-                                order.status,
+                                order.statusTitle,
                               )}`}
                             >
-                              {getOrderStatusIcon(order.status)}
-                              {order.status}
+                              {getOrderStatusIcon(order.statusTitle)}
+                              {order.statusTitle}
                             </Badge>
                           </div>
                           <p className="text-sm text-muted-foreground">
@@ -888,7 +907,7 @@ export function UserProfilePage({
                             {order.items} {order.items === 1 ? "item" : "items"}
                           </p>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right space-y-2">
                           <p className="text-secondary">
                             ${order.total.toFixed(2)}
                           </p>
