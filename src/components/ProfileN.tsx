@@ -42,6 +42,9 @@ import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import API from "./api";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+
 
 interface UserProfilePageProps {
   onNavigateHome?: () => void;
@@ -115,6 +118,7 @@ export function UserProfilePage({
   const [isEditingBilling, setIsEditingBilling] = useState(false);
   const [isEditingShipping, setIsEditingShipping] = useState(false);
 
+  const navigate = useNavigate();
   // Password dialog state
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [passwordData, setPasswordData] = useState({
@@ -127,6 +131,9 @@ export function UserProfilePage({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
+  const { setUser} = useAuth();
+
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const mapOrderStatus = (statusTitle: string): Order["statusTitle"] => {
     switch (statusTitle?.toLowerCase()) {
       case "pending":
@@ -530,13 +537,30 @@ export function UserProfilePage({
     alert("Password changed successfully!");
   };
 
-  const handleLogout = () => {
-    if (confirm("Are you sure you want to logout?")) {
+  const handleLogout= async () =>{
+    setIsLoggingOut(true);
+    try {
+      await API.post("/authuser/logout");
+
       localStorage.removeItem("user");
-      alert("Logged out successfully!");
-      if (onNavigateHome) onNavigateHome();
+      setUser(null);
+
+
+      toast.success("Logged Out Successfully!");
+
+      if(onNavigateHome) onNavigateHome();
+       navigate("/");
+
+    } catch (error) {
+
+      console.error("Logout failed", error);
+
+      toast.error("Logout failed");
+      if(onNavigateHome) onNavigateHome();
+    } finally {
+      setIsLoggingOut(false);
     }
-  };
+  }
 
   const getOrderStatusIcon = (statusTitle: Order["statusTitle"]) => {
     switch (statusTitle) {
@@ -674,6 +698,7 @@ export function UserProfilePage({
                 <Button
                   variant="ghost"
                   onClick={handleLogout}
+                  disabled={isLoggingOut}
                   className="w-full justify-start rounded-xl hover:bg-destructive/10 text-destructive"
                 >
                   <LogOut className="w-5 h-5 mr-3" />
