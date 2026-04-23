@@ -1,19 +1,21 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
 export interface CartItem {
-  id: string;
+  id: string | number;
   name: string;
   price: number;
   image: string;
   quantity: number;
   shipping_cost: number;
+  shop_id: string | number;
+  shopName: string;
 }
 
 interface CartContextType {
   cart: CartItem[];
   addToCart: (item: CartItem) => void;
-  removeFromCart: (id: string) => void;
-  updateQuantity: (id: string, qty: number) => void;
+  removeFromCart: (id: string | number) => void;
+  updateQuantity: (id: string | number, qty: number) => void;
   clearCart: () => void;
   getTotalItems: () => number;
   getTotalPrice: () => number;
@@ -59,11 +61,11 @@ const addToCart = (item: CartItem) => {
   });
 };
 
-  const removeFromCart = (id: string) => {
+  const removeFromCart = (id: string | number) => {
     setCart((prev) => prev.filter((p) => p.id !== id));
   };
 
-  const updateQuantity = (id: string, qty: number) => {
+  const updateQuantity = (id: string | number, qty: number) => {
     setCart((prev) =>
       prev.map((p) =>
         p.id === id ? { ...p, quantity: qty } : p

@@ -7,10 +7,7 @@ import {
   Truck,
   Shield,
   Tag,
-  MapPin,
-  Mail,
-  Phone,
-  User,
+   User,
   Home,
   ChevronRight,
   Lock,
@@ -28,15 +25,19 @@ import { Checkbox } from "./ui/checkbox";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useState } from "react";
 import { useEffect } from "react";
+import { createPaymentIntent, createOrder } from "./order.service";
+import toast from "react-hot-toast";
 
 interface CartItem {
-  id: string;
+  id: number | string;
   name: string;
+  shop_id: number | string;
   price: number;
   image: string;
   quantity: number;
   inStock: boolean;
   shipping_cost: number;
+  shopName: string;
 }
 
 interface CartCheckoutPageProps {
@@ -116,6 +117,17 @@ export function CartCheckoutPage({
       rating: 4.8,
     },
   ];
+
+  const shop_id = cartItems?.[0]?.shop_id;
+  const shopName = cartItems?.[0]?.shopName;
+
+  const splitName = (fullName: string) => {
+    const parts = fullName.trim().split(" ");
+    return{
+      firstName: parts[0] || "",
+      lastName: parts.slice(1).join(" ") || "",
+    };
+  };
 
   useEffect(()=>{
 if(isInitialized){
@@ -244,29 +256,83 @@ const shippingCharge = cartItems.reduce(
     }
   };
 
-  const handlePlaceOrder = () => {
-    // Basic validation
-    if (
-      !billingDetails.fullName ||
-      !billingDetails.email ||
-      !billingDetails.phone
-    ) {
-      alert("Please fill in all required billing details");
-      return;
-    }
+  const handlePlaceOrder = async () => {
+    try {
+      if(!billingDetails.fullName || !billingDetails.email || !billingDetails.phone){
+        alert("Please fill in all required billing details");
+        return;
+      }
 
-    setIsProcessing(true);
-    // Simulate order processing
-    setTimeout(() => {
+      setIsProcessing(true);
+
+     const items = cartItems.map(item =>({
+      id: Number(item.id),
+      quantity: item.quantity,
+     }));
+
+    //  const intentRes = await createPaymentIntent({
+    //   paymentMethodType: paymentMethod,
+    //   currency: "",
+    //   items
+    //  });
+
+    //  const clientSecret = intentRes.client_secret;
+
+     const billingName = splitName(billingDetails.fullName);
+     const shippingName = splitName(shippingDetails.fullName);
+
+    const orderPayload = {
+  billingDetails: {
+    firstName: billingName.firstName,
+    lastName: billingName.lastName,
+    company: "",
+    country: billingDetails.country,
+    address1: billingDetails.address,
+    address2: "",
+    city: "",
+    state: "",
+    zipcode: "",
+    phone: billingDetails.phone,
+    email: billingDetails.email,
+  },
+
+  shippingDetails: {
+    firstName: shippingName.firstName,
+    lastName: shippingName.lastName,
+    company: "",
+    country: shippingDetails.country,
+    address1: shippingDetails.address,
+    address2: "",
+    city: "",
+    state: "",
+    zipcode: "",
+    phone: billingDetails.phone,
+    email: billingDetails.email,
+  },
+
+  // FIXED:
+  shop_id: shop_id, // Assuming all items are from the same shop
+
+  name:shopName ,
+  shipping_cost: shippingCharge,
+  paymentMethodType: paymentMethod,
+  currency: "eur",
+
+  items,
+};
+     const orderRes = await createOrder(orderPayload);
+
+     toast.success("Order placed successfully!");
+
+     onUpdateCart([]);
+     if(onNavigateHome) onNavigateHome();
+    } catch (error) {
+      console.error("Error placing order:", error);
+      toast.error("Failed to place order. Please try again.");
+    } finally{
       setIsProcessing(false);
-      alert(
-        "Order placed successfully! Thank you for shopping at Wow Pets Palace.",
-      );
-      // Clear cart
-      onUpdateCart([]);
-      if (onNavigateHome) onNavigateHome();
-    }, 2000);
-  };
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background">

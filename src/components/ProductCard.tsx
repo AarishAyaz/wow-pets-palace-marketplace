@@ -18,9 +18,12 @@ interface ProductCardProps {
   reviewsCount?: number | null;
   category?: string;
   shipping_cost?: number;
+  shop_id: string | number;
+  shopName: string;
 }
 
 export function ProductCard({
+  id,
   name,
   slug,
   image,
@@ -31,6 +34,8 @@ export function ProductCard({
   reviewsCount = 0,
   category,
   shipping_cost,
+  shop_id,
+  shopName,
 }: ProductCardProps) {
   const navigate = useNavigate();
 
@@ -121,12 +126,14 @@ export function ProductCard({
       e.stopPropagation();
       e.preventDefault();
       addToCart({
-        id: slug,
+        id,
         name,
         price: discountedPrice,
         image,
         quantity: 1,
-        shipping_cost, // Replace with actual shipping cost if available
+        shipping_cost: shipping_cost || 0, // Replace with actual shipping cost if available
+        shop_id,
+        shopName,
       })
     }}
     className="mt-auto w-full bg-gradient-to-r from-primary to-primary/80 text-xs lg:text-sm flex items-center  justify-center gap-1">

@@ -529,6 +529,8 @@ export function ProductDetailsPage() {
         image: selectedImage,
         quantity: quantity,
         shipping_cost: product.shipping_cost || 0,
+        shop_id: product.shop_id,
+        shopName: product.shopName,
       })
     }
                 size="lg"

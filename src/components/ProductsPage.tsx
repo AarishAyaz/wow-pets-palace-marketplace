@@ -16,6 +16,9 @@ interface Product {
   rating: number;
   reviewsCount: number;
   categoryTitle: string;
+  shipping_cost: number;
+  shop_id: string | number;
+  shopName: string;
 }
 
 interface Category {
@@ -117,6 +120,9 @@ if (selectedBrands.length > 0) params["brand_id[]"] = selectedBrands;
         rating: item.overall_rating ?? 0,
         reviewsCount: 0,
         categoryTitle: item.categoryTitle,
+        shipping_cost: item.shipping_cost || 0,
+        shop_id: item.shop_id,
+        shopName: item.shopName,
       }));
 
       setProducts(mapped);
@@ -477,6 +483,9 @@ if (selectedBrands.length > 0) params["brand_id[]"] = selectedBrands;
                     rating={product.rating}
                     reviewsCount={product.reviewsCount}
                     category={product.categoryTitle}
+                    shipping_cost={product.shipping_cost}
+                    shop_id={product.shop_id}
+                    shopName={product.shopName}
                   />
                 ))}
               </div>

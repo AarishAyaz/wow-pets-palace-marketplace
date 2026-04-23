@@ -14,6 +14,8 @@ export default function CartCheckoutWrapper() {
         quantity: item.quantity,
         inStock: true,
         shipping_cost: item.shipping_cost || 0,
+        shopName: item.shopName,
+        shop_id: item.shop_id,
     }));
 
     const handleUpdateCart = (updatedItems :typeof cartItems)=>{
