@@ -67,6 +67,10 @@ export function CartCheckoutPage({
     phone: "",
     country: "",
     address: "",
+    postal_code: "",
+    city: "",
+    state: "",
+
   });
 
   const [shippingDetails, setShippingDetails] = useState({
@@ -156,6 +160,9 @@ if(isInitialized){
     phone: userData.billing_phone || userData.phoneNumber || "",
     country: userData.billing_country || "",
     address: `${userData.billing_address_1 || ""} ${userData.billing_address_2 || ""}`.trim(),
+    postal_code: userData.billing_postal_code || "" ,
+    city: userData.billing_city || "",
+    billing_state: userData.billing_state || "",
   };
 
   // Shipping
@@ -281,47 +288,45 @@ const shippingCharge = cartItems.reduce(
      const billingName = splitName(billingDetails.fullName);
      const shippingName = splitName(shippingDetails.fullName);
 
-    const orderPayload = {
+const orderPayload = {
   billingDetails: {
-    firstName: billingName.firstName,
-    lastName: billingName.lastName,
-    company: "",
-    country: billingDetails.country,
-    address1: billingDetails.address,
-    address2: "",
-    city: "",
-    state: "",
-    zipcode: "",
-    phone: billingDetails.phone,
-    email: billingDetails.email,
-  },
+  firstName: billingName.firstName,
+  lastName: billingName.lastName,
+  company: "",
+  country: billingDetails.country,
+  address1: billingDetails.address || "N/A",
+  address2: "",
+  city: billingDetails.city || "N/A",
+  state: billingDetails.state || "N/A",
+  zipCode: billingDetails.postal_code || "0000",
+  phone: billingDetails.phone || "0000000000",
+  email: billingDetails.email,
+},
 
-  shippingDetails: {
-    firstName: shippingName.firstName,
-    lastName: shippingName.lastName,
-    company: "",
-    country: shippingDetails.country,
-    address1: shippingDetails.address,
-    address2: "",
-    city: "",
-    state: "",
-    zipcode: "",
-    phone: billingDetails.phone,
-    email: billingDetails.email,
-  },
-
-  // FIXED:
-  shop_id: shop_id, // Assuming all items are from the same shop
-
-  name:shopName ,
+ shippingDetails: {
+  firstName: shippingName.firstName,
+  lastName: shippingName.lastName,
+  company: "",
+  country: shippingDetails.country,
+  address1: shippingDetails.address || "N/A",
+  address2: "",
+  city: billingDetails.city || "N/A",
+  state: billingDetails.state || "N/A",
+  zipCode: billingDetails.postal_code || "0000",
+  phone: billingDetails.phone || "0000000000",
+  email: billingDetails.email,
+},
+  contact_phone: billingDetails.phone || "0000000000",
+  shop_id: shop_id,
+  name: shopName,
   shipping_cost: shippingCharge,
   paymentMethodType: paymentMethod,
   currency: "eur",
-
   items,
-};
+};  
+console.log("PAYLOAD:", orderPayload);
      const orderRes = await createOrder(orderPayload);
-
+    console.log("Order response:", orderRes);
      toast.success("Order placed successfully!");
 
      onUpdateCart([]);
@@ -428,6 +433,7 @@ const shippingCharge = cartItems.reduce(
                           <Input
                             id="email"
                             type="email"
+                            disabled
                             placeholder="john@example.com"
                             value={billingDetails.email}
                             onChange={(e) =>
@@ -501,6 +507,16 @@ const shippingCharge = cartItems.reduce(
                         className="w-full px-4 py-3 rounded-xl border-2 border-primary/30 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 bg-background resize-none"
                       />
                     </div>
+                    <Input
+  placeholder="Postal Code"
+  value={billingDetails.postal_code}
+  onChange={(e) =>
+    setBillingDetails({
+      ...billingDetails,
+      postal_code: e.target.value,
+    })
+  }
+/>
                   </div>
 
                   <Separator />
