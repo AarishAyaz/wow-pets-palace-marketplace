@@ -7,12 +7,13 @@ import {
   Truck,
   Shield,
   Tag,
-   User,
+  User,
   Home,
   ChevronRight,
   Lock,
   Check,
   X,
+  Currency,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
@@ -70,7 +71,6 @@ export function CartCheckoutPage({
     postal_code: "",
     city: "",
     state: "",
-
   });
 
   const [shippingDetails, setShippingDetails] = useState({
@@ -127,20 +127,20 @@ export function CartCheckoutPage({
 
   const splitName = (fullName: string) => {
     const parts = fullName.trim().split(" ");
-    return{
+    return {
       firstName: parts[0] || "",
       lastName: parts.slice(1).join(" ") || "",
     };
   };
 
-  useEffect(()=>{
-if(isInitialized){
-  return;
-}
+  useEffect(() => {
+    if (isInitialized) {
+      return;
+    }
 
     const storedUser = localStorage.getItem("user");
 
-    if(storedUser){
+    if (storedUser) {
       const parsedUser = JSON.parse(storedUser);
       initializeForm(parsedUser);
       setIsInitialized(true);
@@ -148,76 +148,76 @@ if(isInitialized){
   }, [isInitialized]);
 
   const initializeForm = (userData: any) => {
-    const fullName = 
-    userData.firstName && userData.lastName
-    ? `${userData.firstName} ${userData.lastName}`
-    : userData.firstName || "";
+    const fullName =
+      userData.firstName && userData.lastName
+        ? `${userData.firstName} ${userData.lastName}`
+        : userData.firstName || "";
 
-      // Billing
-  const billing = {
-    fullName,
-    email: userData.billing_email || userData.email || "",
-    phone: userData.billing_phone || userData.phoneNumber || "",
-    country: userData.billing_country || "",
-    address: `${userData.billing_address_1 || ""} ${userData.billing_address_2 || ""}`.trim(),
-    postal_code: userData.billing_postal_code || "" ,
-    city: userData.billing_city || "",
-    billing_state: userData.billing_state || "",
-  };
+    // Billing
+    const billing = {
+      fullName,
+      email: userData.billing_email || userData.email || "",
+      phone: userData.billing_phone || userData.phoneNumber || "",
+      country: userData.billing_country || "",
+      address:
+        `${userData.billing_address_1 || ""} ${userData.billing_address_2 || ""}`.trim(),
+      postal_code: userData.billing_postal_code || "",
+      city: userData.billing_city || "",
+      state: userData.billing_state || "",
+    };
 
-  // Shipping
- const shipping = {
-  fullName:
-    userData.shipping_first_name && userData.shipping_last_name
-      ? `${userData.shipping_first_name} ${userData.shipping_last_name}`
-      : fullName,
+    // Shipping
+    const shipping = {
+      fullName:
+        userData.shipping_first_name && userData.shipping_last_name
+          ? `${userData.shipping_first_name} ${userData.shipping_last_name}`
+          : fullName,
 
-  country: userData.shipping_country || userData.billing_country || "",
+      country: userData.shipping_country || userData.billing_country || "",
 
-  address: [
-    userData.shipping_address_1,
-    userData.shipping_address_2,
-  ]
-    .filter(Boolean)
-    .join(" ") ||
-    [
-      userData.billing_address_1,
-      userData.billing_address_2,
-    ]
-      .filter(Boolean)
-      .join(" "),
-};
+      address:
+        [userData.shipping_address_1, userData.shipping_address_2]
+          .filter(Boolean)
+          .join(" ") ||
+        [userData.billing_address_1, userData.billing_address_2]
+          .filter(Boolean)
+          .join(" "),
+    };
     setBillingDetails(billing);
-    setShippingDetails(shipping)
+    setShippingDetails(shipping);
 
-const isSame =
-  billing.address.trim().toLowerCase() ===
-    shipping.address.trim().toLowerCase() &&
-  billing.country.trim().toLowerCase() ===
-    shipping.country.trim().toLowerCase();
+    const isSame =
+      billing.address.trim().toLowerCase() ===
+        shipping.address.trim().toLowerCase() &&
+      billing.country.trim().toLowerCase() ===
+        shipping.country.trim().toLowerCase();
 
     setSameAsBilling(isSame);
-  }
+  };
 
-  useEffect(()=>{
-    if(!sameAsBilling)
-      return;
-      setShippingDetails({
-        fullName: billingDetails.fullName,
-        address: billingDetails.address,
-        country: billingDetails.country,
-  });
-    
-  }, [ sameAsBilling, billingDetails]);
+  useEffect(() => {
+    if (!sameAsBilling) return;
+    setShippingDetails({
+      fullName: billingDetails.fullName,
+      address: billingDetails.address,
+      country: billingDetails.country,
+    });
+  }, [sameAsBilling, billingDetails]);
   // Calculate totals
   const subtotal = cartItems.reduce(
     (acc, item) => acc + item.price * item.quantity,
     0,
   );
-const shippingCharge = cartItems.reduce(
-  (acc, item) => acc + item.shipping_cost * item.quantity,
-  0
-);  const discountAmount = promoApplied ? subtotal * discount : 0;
+  const rawShippingCharge = cartItems.reduce(
+    (acc, item) => acc + item.shipping_cost * item.quantity,
+    0,
+  );
+
+  const FREE_SHIPPING_THRESHOLD = 75;
+
+  const shippingCharge =
+    subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : rawShippingCharge;
+  const discountAmount = promoApplied ? subtotal * discount : 0;
   const total = subtotal + shippingCharge - discountAmount;
 
   const updateQuantity = (itemId: string, newQuantity: number) => {
@@ -254,7 +254,7 @@ const shippingCharge = cartItems.reduce(
 
   const handleSameAsBilling = (checked: boolean) => {
     setSameAsBilling(checked);
-    if(checked){
+    if (checked) {
       setShippingDetails({
         fullName: billingDetails.fullName,
         address: billingDetails.address,
@@ -265,79 +265,93 @@ const shippingCharge = cartItems.reduce(
 
   const handlePlaceOrder = async () => {
     try {
-      if(!billingDetails.fullName || !billingDetails.email || !billingDetails.phone){
+      if (
+        !billingDetails.fullName ||
+        !billingDetails.email ||
+        !billingDetails.phone
+      ) {
         alert("Please fill in all required billing details");
         return;
       }
 
       setIsProcessing(true);
 
-     const items = cartItems.map(item =>({
-      id: Number(item.id),
-      quantity: item.quantity,
-     }));
+      const items = cartItems.map((item) => ({
+        id: Number(item.id),
+        quantity: item.quantity,
+      }));
 
-    //  const intentRes = await createPaymentIntent({
-    //   paymentMethodType: paymentMethod,
-    //   currency: "",
-    //   items
-    //  });
+      const billingName = splitName(billingDetails.fullName);
+      const shippingName = splitName(shippingDetails.fullName);
 
-    //  const clientSecret = intentRes.client_secret;
+      const orderPayload = {
+        billingDetails: {
+          firstName: billingName.firstName,
+          lastName: billingName.lastName,
+          company: "",
+          country: billingDetails.country,
+          address1: billingDetails.address || "N/A",
+          address2: "",
+          city: billingDetails.city || "N/A",
+          state: billingDetails.state || "N/A",
+          zipCode: billingDetails.postal_code || "0000",
+          phone: billingDetails.phone || "0000000000",
+          email: billingDetails.email,
+        },
 
-     const billingName = splitName(billingDetails.fullName);
-     const shippingName = splitName(shippingDetails.fullName);
+        shippingDetails: {
+          firstName: shippingName.firstName,
+          lastName: shippingName.lastName,
+          company: "",
+          country: shippingDetails.country,
+          address1: shippingDetails.address || "N/A",
+          address2: "",
+          city: billingDetails.city || "N/A",
+          state: billingDetails.state || "N/A",
+          zipCode: billingDetails.postal_code || "0000",
+          phone: billingDetails.phone || "0000000000",
+          email: billingDetails.email,
+        },
+        contact_phone: billingDetails.phone || "0000000000",
+        shop_id: shop_id,
+        name: shopName,
+        shipping_cost: shippingCharge,
+        paymentMethodType: paymentMethod,
+        currency: "eur",
+        items,
+      };
 
-const orderPayload = {
-  billingDetails: {
-  firstName: billingName.firstName,
-  lastName: billingName.lastName,
-  company: "",
-  country: billingDetails.country,
-  address1: billingDetails.address || "N/A",
-  address2: "",
-  city: billingDetails.city || "N/A",
-  state: billingDetails.state || "N/A",
-  zipCode: billingDetails.postal_code || "0000",
-  phone: billingDetails.phone || "0000000000",
-  email: billingDetails.email,
-},
+      if (paymentMethod === "card") {
+        const intentRes = await createPaymentIntent({
+          paymentMethodType: "card",
+          Currency: "eur",
+          items,
+        });
+        const clientSecret = intentRes.client_secret;
 
- shippingDetails: {
-  firstName: shippingName.firstName,
-  lastName: shippingName.lastName,
-  company: "",
-  country: shippingDetails.country,
-  address1: shippingDetails.address || "N/A",
-  address2: "",
-  city: billingDetails.city || "N/A",
-  state: billingDetails.state || "N/A",
-  zipCode: billingDetails.postal_code || "0000",
-  phone: billingDetails.phone || "0000000000",
-  email: billingDetails.email,
-},
-  contact_phone: billingDetails.phone || "0000000000",
-  shop_id: shop_id,
-  name: shopName,
-  shipping_cost: shippingCharge,
-  paymentMethodType: paymentMethod,
-  currency: "eur",
-  items,
-};  
-console.log("PAYLOAD:", orderPayload);
-     const orderRes = await createOrder(orderPayload);
-    console.log("Order response:", orderRes);
-     toast.success("Order placed successfully!");
+        if (!clientSecret) {
+          throw new Error("Failed to create payment intent");
+        }
 
-     onUpdateCart([]);
-     if(onNavigateHome) onNavigateHome();
+        console.log("Payment intent created:", intentRes);
+        const orderRes = await createOrder(orderPayload);
+        console.log("Order response:", orderRes);
+      } else {
+        const orderRes = await createOrder(orderPayload);
+        console.log("Order response:", orderRes);
+      }
+
+      toast.success("Order placed successfully!");
+
+      onUpdateCart([]);
+      if (onNavigateHome) onNavigateHome();
     } catch (error) {
       console.error("Error placing order:", error);
       toast.error("Failed to place order. Please try again.");
-    } finally{
+    } finally {
       setIsProcessing(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -508,15 +522,15 @@ console.log("PAYLOAD:", orderPayload);
                       />
                     </div>
                     <Input
-  placeholder="Postal Code"
-  value={billingDetails.postal_code}
-  onChange={(e) =>
-    setBillingDetails({
-      ...billingDetails,
-      postal_code: e.target.value,
-    })
-  }
-/>
+                      placeholder="Postal Code"
+                      value={billingDetails.postal_code}
+                      onChange={(e) =>
+                        setBillingDetails({
+                          ...billingDetails,
+                          postal_code: e.target.value,
+                        })
+                      }
+                    />
                   </div>
 
                   <Separator />
@@ -605,176 +619,12 @@ console.log("PAYLOAD:", orderPayload);
                                 address: e.target.value,
                               })
                             }
-                        className="w-full px-4 py-3 rounded-xl border-2 border-primary/30 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 bg-background resize-none"
+                            className="w-full px-4 py-3 rounded-xl border-2 border-primary/30 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 bg-background resize-none"
                           />
                         </div>
                       </div>
                     )}
                   </div>
-                </CardContent>
-              </Card>
-
-              {/* Payment Method */}
-              <Card className="rounded-3xl border-0 shadow-xl">
-                <CardHeader>
-                  <CardTitle className="text-foreground flex items-center gap-2">
-                    <CreditCard className="w-6 h-6 text-primary" />
-                    Payment Method
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <RadioGroup
-                    value={paymentMethod}
-                    onValueChange={setPaymentMethod}
-                  >
-                    <div className="space-y-3">
-                      {/* Credit/Debit Card */}
-                      <div
-                        className={`flex items-center space-x-4 p-4 rounded-2xl border-2 transition-all cursor-pointer ${
-                          paymentMethod === "card"
-                            ? "border-secondary bg-secondary/5"
-                            : "border-muted hover:border-primary/30"
-                        }`}
-                        onClick={() => setPaymentMethod("card")}
-                      >
-                        <RadioGroupItem value="card" id="card" />
-                        <div className="flex items-center gap-3 flex-1">
-                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
-                            <CreditCard className="w-6 h-6 text-primary" />
-                          </div>
-                          <div>
-                            <Label htmlFor="card" className="cursor-pointer">
-                              Credit / Debit Card
-                            </Label>
-                            <p className="text-xs text-muted-foreground">
-                              Pay securely with your card
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Card Details - Show when card is selected */}
-                      {paymentMethod === "card" && (
-                        <div className="ml-4 pl-4 border-l-2 border-secondary space-y-4 py-4">
-                          <div className="space-y-2">
-                            <Label
-                              htmlFor="cardNumber"
-                              className="text-foreground"
-                            >
-                              Card Number
-                            </Label>
-                            <Input
-                              id="cardNumber"
-                              placeholder="1234 5678 9012 3456"
-                              value={cardDetails.cardNumber}
-                              onChange={(e) =>
-                                setCardDetails({
-                                  ...cardDetails,
-                                  cardNumber: e.target.value,
-                                })
-                              }
-                              className="rounded-xl border-primary/30 focus:border-primary"
-                              maxLength={19}
-                            />
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label
-                                htmlFor="expiry"
-                                className="text-foreground"
-                              >
-                                Expiry Date
-                              </Label>
-                              <Input
-                                id="expiry"
-                                placeholder="MM/YY"
-                                value={cardDetails.expiry}
-                                onChange={(e) =>
-                                  setCardDetails({
-                                    ...cardDetails,
-                                    expiry: e.target.value,
-                                  })
-                                }
-                                className="rounded-xl border-primary/30 focus:border-primary"
-                                maxLength={5}
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="cvv" className="text-foreground">
-                                CVV
-                              </Label>
-                              <Input
-                                id="cvv"
-                                placeholder="123"
-                                type="password"
-                                value={cardDetails.cvv}
-                                onChange={(e) =>
-                                  setCardDetails({
-                                    ...cardDetails,
-                                    cvv: e.target.value,
-                                  })
-                                }
-                                className="rounded-xl border-primary/30 focus:border-primary"
-                                maxLength={4}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* PayPal */}
-                      <div
-                        className={`flex items-center space-x-4 p-4 rounded-2xl border-2 transition-all cursor-pointer ${
-                          paymentMethod === "paypal"
-                            ? "border-secondary bg-secondary/5"
-                            : "border-muted hover:border-primary/30"
-                        }`}
-                        onClick={() => setPaymentMethod("paypal")}
-                      >
-                        <RadioGroupItem value="paypal" id="paypal" />
-                        <div className="flex items-center gap-3 flex-1">
-                          <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center">
-                            <span className="text-blue-600 font-bold text-lg">
-                              P
-                            </span>
-                          </div>
-                          <div>
-                            <Label htmlFor="paypal" className="cursor-pointer">
-                              PayPal
-                            </Label>
-                            <p className="text-xs text-muted-foreground">
-                              Pay with your PayPal account
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Cash on Delivery */}
-                      <div
-                        className={`flex items-center space-x-4 p-4 rounded-2xl border-2 transition-all cursor-pointer ${
-                          paymentMethod === "cod"
-                            ? "border-secondary bg-secondary/5"
-                            : "border-muted hover:border-primary/30"
-                        }`}
-                        onClick={() => setPaymentMethod("cod")}
-                      >
-                        <RadioGroupItem value="cod" id="cod" />
-                        <div className="flex items-center gap-3 flex-1">
-                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center">
-                            <span className="text-2xl">💵</span>
-                          </div>
-                          <div>
-                            <Label htmlFor="cod" className="cursor-pointer">
-                              Cash on Delivery
-                            </Label>
-                            <p className="text-xs text-muted-foreground">
-                              Pay when you receive your order
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </RadioGroup>
                 </CardContent>
               </Card>
 
@@ -833,7 +683,7 @@ console.log("PAYLOAD:", orderPayload);
                             variant="outline"
                             className="h-8 w-8"
                             onClick={() =>
-                              updateQuantity(item.id, item.quantity - 1)
+                              updateQuantity(String(item.id), item.quantity - 1)
                             }
                           >
                             <Minus className="w-3 h-3" />
@@ -844,7 +694,7 @@ console.log("PAYLOAD:", orderPayload);
                           <Button
                             size="icon"
                             onClick={() =>
-                              updateQuantity(item.id, item.quantity + 1)
+                              updateQuantity(String(item.id), item.quantity + 1)
                             }
                           >
                             <Plus />
@@ -854,7 +704,7 @@ console.log("PAYLOAD:", orderPayload);
                         <Button
                           variant="destructive"
                           size="icon"
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => removeItem(String(item.id))}
                         >
                           <Trash2 />
                         </Button>
@@ -921,11 +771,8 @@ console.log("PAYLOAD:", orderPayload);
                       <div className="flex justify-between text-muted-foreground">
                         <span className="flex items-center gap-2">
                           Shipping
-                          {subtotal > 75 && (
-                            <Badge
-                              variant="outline"
-                              className="text-xs border-green-600 text-green-600"
-                            >
+                          {subtotal >= FREE_SHIPPING_THRESHOLD && (
+                            <Badge className="text-xs border-green-600 text-green-600">
                               FREE
                             </Badge>
                           )}
@@ -936,10 +783,11 @@ console.log("PAYLOAD:", orderPayload);
                             : `$${shippingCharge.toFixed(2)}`}
                         </span>
                       </div>
-                      {subtotal <= 75 && (
+
+                      {subtotal < FREE_SHIPPING_THRESHOLD && (
                         <p className="text-xs text-muted-foreground">
-                          Add ${(75 - subtotal).toFixed(2)} more for free
-                          shipping!
+                          Add ${(FREE_SHIPPING_THRESHOLD - subtotal).toFixed(2)}{" "}
+                          more for free shipping!
                         </p>
                       )}
                       {promoApplied && (
@@ -959,6 +807,176 @@ console.log("PAYLOAD:", orderPayload);
                         ${total.toFixed(2)}
                       </span>
                     </div>
+                    {/* Payment Method */}
+                    <CardHeader>
+                      <CardTitle className="text-foreground flex items-center gap-2">
+                        <CreditCard className="w-6 h-6 text-primary" />
+                        Payment Method
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <RadioGroup
+                        value={paymentMethod}
+                        onValueChange={setPaymentMethod}
+                      >
+                        <div className="space-y-3">
+                          {/* Credit/Debit Card */}
+                          <div
+                            className={`flex items-center space-x-4 p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                              paymentMethod === "card"
+                                ? "border-secondary bg-secondary/5"
+                                : "border-muted hover:border-primary/30"
+                            }`}
+                            onClick={() => setPaymentMethod("card")}
+                          >
+                            <RadioGroupItem value="card" id="card" />
+                            <div className="flex items-center gap-3 flex-1">
+                              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
+                                <CreditCard className="w-6 h-6 text-primary" />
+                              </div>
+                              <div>
+                                <Label
+                                  htmlFor="card"
+                                  className="cursor-pointer"
+                                >
+                                  Credit / Debit Card
+                                </Label>
+                                <p className="text-xs text-muted-foreground">
+                                  Pay securely with your card
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Card Details - Show when card is selected */}
+                          {paymentMethod === "card" && (
+                            <div className="ml-4 pl-4 border-l-2 border-secondary space-y-4 py-4">
+                              <div className="space-y-2">
+                                <Label
+                                  htmlFor="cardNumber"
+                                  className="text-foreground"
+                                >
+                                  Card Number
+                                </Label>
+                                <Input
+                                  id="cardNumber"
+                                  placeholder="1234 5678 9012 3456"
+                                  value={cardDetails.cardNumber}
+                                  onChange={(e) =>
+                                    setCardDetails({
+                                      ...cardDetails,
+                                      cardNumber: e.target.value,
+                                    })
+                                  }
+                                  className="rounded-xl border-primary/30 focus:border-primary"
+                                  maxLength={19}
+                                />
+                              </div>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <Label
+                                    htmlFor="expiry"
+                                    className="text-foreground"
+                                  >
+                                    Expiry Date
+                                  </Label>
+                                  <Input
+                                    id="expiry"
+                                    placeholder="MM/YY"
+                                    value={cardDetails.expiry}
+                                    onChange={(e) =>
+                                      setCardDetails({
+                                        ...cardDetails,
+                                        expiry: e.target.value,
+                                      })
+                                    }
+                                    className="rounded-xl border-primary/30 focus:border-primary"
+                                    maxLength={5}
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label
+                                    htmlFor="cvv"
+                                    className="text-foreground"
+                                  >
+                                    CVV
+                                  </Label>
+                                  <Input
+                                    id="cvv"
+                                    placeholder="123"
+                                    type="password"
+                                    value={cardDetails.cvv}
+                                    onChange={(e) =>
+                                      setCardDetails({
+                                        ...cardDetails,
+                                        cvv: e.target.value,
+                                      })
+                                    }
+                                    className="rounded-xl border-primary/30 focus:border-primary"
+                                    maxLength={4}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* PayPal */}
+                          <div
+                            className={`flex items-center space-x-4 p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                              paymentMethod === "paypal"
+                                ? "border-secondary bg-secondary/5"
+                                : "border-muted hover:border-primary/30"
+                            }`}
+                            onClick={() => setPaymentMethod("paypal")}
+                          >
+                            <RadioGroupItem value="paypal" id="paypal" />
+                            <div className="flex items-center gap-3 flex-1">
+                              <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center">
+                                <span className="text-blue-600 font-bold text-lg">
+                                  P
+                                </span>
+                              </div>
+                              <div>
+                                <Label
+                                  htmlFor="paypal"
+                                  className="cursor-pointer"
+                                >
+                                  PayPal
+                                </Label>
+                                <p className="text-xs text-muted-foreground">
+                                  Pay with your PayPal account
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Cash on Delivery */}
+                          <div
+                            className={`flex items-center space-x-4 p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                              paymentMethod === "cod"
+                                ? "border-secondary bg-secondary/5"
+                                : "border-muted hover:border-primary/30"
+                            }`}
+                            onClick={() => setPaymentMethod("cod")}
+                          >
+                            <RadioGroupItem value="cod" id="cod" />
+                            <div className="flex items-center gap-3 flex-1">
+                              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center">
+                                <span className="text-2xl">💵</span>
+                              </div>
+                              <div>
+                                <Label htmlFor="cod" className="cursor-pointer">
+                                  Cash on Delivery
+                                </Label>
+                                <p className="text-xs text-muted-foreground">
+                                  Pay when you receive your order
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </RadioGroup>
+                    </CardContent>
 
                     {/* Place Order Button */}
                     <Button
