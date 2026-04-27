@@ -13,7 +13,6 @@ import {
   Lock,
   Check,
   X,
-  Currency,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
@@ -28,6 +27,8 @@ import { useState } from "react";
 import { useEffect } from "react";
 import { createPaymentIntent, createOrder } from "./order.service";
 import toast from "react-hot-toast";
+import {StripeCardForm} from "./StripeCardForm";
+
 
 interface CartItem {
   id: number | string;
@@ -79,13 +80,12 @@ export function CartCheckoutPage({
     country: "",
   });
 
-  const [cardDetails, setCardDetails] = useState({
-    cardNumber: "",
-    expiry: "",
-    cvv: "",
-  });
-  const [isInitialized, setIsInitialized] = useState(false);
 
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [orderPayload, setOrderPayload] = useState<any>(null); // Store order payload for later use in StripeCardForm
+
+  const [clientSecret, setClientSecret] = useState("");
+  const [showStripe, setShowStripe] = useState(false);
   // Related products
   const relatedProducts = [
     {
@@ -263,97 +263,84 @@ export function CartCheckoutPage({
     }
   };
 
-  const handlePlaceOrder = async () => {
-    try {
-      if (
-        !billingDetails.fullName ||
-        !billingDetails.email ||
-        !billingDetails.phone
-      ) {
-        alert("Please fill in all required billing details");
-        return;
-      }
+const handlePlaceOrder = async () => {
+  try {
+    if (!billingDetails.fullName || !billingDetails.email || !billingDetails.phone) {
+      alert("Please fill in all required billing details");
+      return;
+    }
 
-      setIsProcessing(true);
+    setIsProcessing(true);
 
-      const items = cartItems.map((item) => ({
-        id: Number(item.id),
-        quantity: item.quantity,
-      }));
+    const items = cartItems.map((item) => ({
+      id: Number(item.id),
+      quantity: item.quantity,
+    }));
 
-      const billingName = splitName(billingDetails.fullName);
-      const shippingName = splitName(shippingDetails.fullName);
+    const billingName = splitName(billingDetails.fullName);
+    const shippingName = splitName(shippingDetails.fullName);
 
-      const orderPayload = {
-        billingDetails: {
-          firstName: billingName.firstName,
-          lastName: billingName.lastName,
-          company: "",
-          country: billingDetails.country,
-          address1: billingDetails.address || "N/A",
-          address2: "",
-          city: billingDetails.city || "N/A",
-          state: billingDetails.state || "N/A",
-          zipCode: billingDetails.postal_code || "0000",
-          phone: billingDetails.phone || "0000000000",
-          email: billingDetails.email,
-        },
+    const orderPayload = {
+      billingDetails: {
+        firstName: billingName.firstName,
+        lastName: billingName.lastName,
+        company: "",
+        country: billingDetails.country,
+        address1: billingDetails.address || "N/A",
+        address2: "",
+        city: billingDetails.city || "N/A",
+        state: billingDetails.state || "N/A",
+        zipCode: billingDetails.postal_code || "0000",
+        phone: billingDetails.phone || "0000000000",
+        email: billingDetails.email,
+      },
+      shippingDetails: {
+        firstName: shippingName.firstName,
+        lastName: shippingName.lastName,
+        company: "",
+        country: shippingDetails.country,
+        address1: shippingDetails.address || "N/A",
+        address2: "",
+        city: billingDetails.city || "N/A",
+        state: billingDetails.state || "N/A",
+        zipCode: billingDetails.postal_code || "0000",
+        phone: billingDetails.phone || "0000000000",
+        email: billingDetails.email,
+      },
+      contact_phone: billingDetails.phone || "0000000000",
+      shop_id: shop_id,
+      name: shopName,
+      shipping_cost: shippingCharge,
+      paymentMethodType: paymentMethod,
+      currency: "eur",
+      items,
+    };
 
-        shippingDetails: {
-          firstName: shippingName.firstName,
-          lastName: shippingName.lastName,
-          company: "",
-          country: shippingDetails.country,
-          address1: shippingDetails.address || "N/A",
-          address2: "",
-          city: billingDetails.city || "N/A",
-          state: billingDetails.state || "N/A",
-          zipCode: billingDetails.postal_code || "0000",
-          phone: billingDetails.phone || "0000000000",
-          email: billingDetails.email,
-        },
-        contact_phone: billingDetails.phone || "0000000000",
-        shop_id: shop_id,
-        name: shopName,
-        shipping_cost: shippingCharge,
-        paymentMethodType: paymentMethod,
-        currency: "eur",
+    if (paymentMethod === "card") {
+      const intentRes = await createPaymentIntent({
+        paymentMethodType: "card",
+        Currency: "eur",
         items,
+      });
 
-      };
-
-      if (paymentMethod === "card") {
-        const intentRes = await createPaymentIntent({
-          paymentMethodType: "card",
-          Currency: "eur",
-          items,
-        });
-        const clientSecret = intentRes.client_secret;
-
-        if (!clientSecret) {
-          throw new Error("Failed to create payment intent");
-        }
-
-        console.log("Payment intent created:", intentRes);
-        const orderRes = await createOrder(orderPayload);
-        console.log("Order response:", orderRes);
-      } else {
-        const orderRes = await createOrder(orderPayload);
-        console.log("Order response:", orderRes);
-      }
-
+      setClientSecret(intentRes.client_secret);
+      setOrderPayload(orderPayload); // store for later use in StripeCardForm
+      setShowStripe(true);
+    } else {
+      // COD — skip intent, go straight to order
+      const orderRes = await createOrder(orderPayload);
+      console.log("Order response:", orderRes);
       toast.success("Order placed successfully!");
-
       onUpdateCart([]);
       if (onNavigateHome) onNavigateHome();
-    } catch (error) {
-      console.error("Error placing order:", error);
-      toast.error("Failed to place order. Please try again.");
-    } finally {
-      setIsProcessing(false);
     }
-  };
-
+  } catch (error) {
+    console.error("Error placing order:", error);
+    toast.error("Failed to place order. Please try again.");
+  } finally {
+    setIsProcessing(false);
+  }
+};
   return (
     <div className="min-h-screen bg-background">
       {/* <Header onNavigateHome={onNavigateHome} cartItemCount=0 /> */}
@@ -850,79 +837,23 @@ export function CartCheckoutPage({
                           </div>
 
                           {/* Card Details - Show when card is selected */}
-                          {paymentMethod === "card" && (
-                            <div className="ml-4 pl-4 border-l-2 border-secondary space-y-4 py-4">
-                              <div className="space-y-2">
-                                <Label
-                                  htmlFor="cardNumber"
-                                  className="text-foreground"
-                                >
-                                  Card Number
-                                </Label>
-                                <Input
-                                  id="cardNumber"
-                                  required
-                                  placeholder="1234 5678 9012 3456"
-                                  value={cardDetails.cardNumber}
-                                  onChange={(e) =>
-                                    setCardDetails({
-                                      ...cardDetails,
-                                      cardNumber: e.target.value,
-                                    })
-                                  }
-                                  className="rounded-xl border-primary/30 focus:border-primary"
-                                  maxLength={19}
-                                />
-                              </div>
-                              <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                  <Label
-                                    htmlFor="expiry"
-                                    className="text-foreground"
-                                  >
-                                    Expiry Date
-                                  </Label>
-                                  <Input
-                                    id="expiry"
-                                    required
-                                    placeholder="MM/YY"
-                                    value={cardDetails.expiry}
-                                    onChange={(e) =>
-                                      setCardDetails({
-                                        ...cardDetails,
-                                        expiry: e.target.value,
-                                      })
-                                    }
-                                    className="rounded-xl border-primary/30 focus:border-primary"
-                                    maxLength={5}
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <Label
-                                    htmlFor="cvv"
-                                    className="text-foreground"
-                                  >
-                                    CVV
-                                  </Label>
-                                  <Input
-                                    id="cvv"
-                                    required
-                                    placeholder="123"
-                                    type="password"
-                                    value={cardDetails.cvv}
-                                    onChange={(e) =>
-                                      setCardDetails({
-                                        ...cardDetails,
-                                        cvv: e.target.value,
-                                      })
-                                    }
-                                    className="rounded-xl border-primary/30 focus:border-primary"
-                                    maxLength={4}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          )}
+                          {paymentMethod === "card" && showStripe && clientSecret && (
+  <StripeCardForm
+    clientSecret={clientSecret}
+    onBack={() => setShowStripe(false)}
+    onSuccess={async () => {
+      try {
+        const orderRes = await createOrder(orderPayload);
+        console.log("Order response:", orderRes);
+        toast.success("Payment successful & order placed!");
+        onUpdateCart([]);
+        if (onNavigateHome) onNavigateHome();
+      } catch (err) {
+        toast.error("Payment succeeded but order failed. Contact support.");
+      }
+    }}
+  />
+)}
 
                           {/* PayPal */}
                           <div
@@ -986,7 +917,7 @@ export function CartCheckoutPage({
                     <Button
                       size="lg"
                       onClick={handlePlaceOrder}
-                      disabled={isProcessing || cartItems.length === 0}
+                      disabled={isProcessing || cartItems.length === 0 || showStripe}
                       className="w-full rounded-full bg-gradient-to-r from-primary to-secondary text-white hover:from-primary/90 hover:to-secondary/90 shadow-lg hover:shadow-xl transition-all duration-300 h-14 text-lg"
                     >
                       {isProcessing ? (

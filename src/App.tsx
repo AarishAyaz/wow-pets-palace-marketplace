@@ -29,6 +29,8 @@ import GoogleOneTap from "./components/GoogleOneTap";
 import { UserProfilePage } from "./components/ProfileN";
 import { Toaster } from "react-hot-toast";
 import CartCheckoutWrapper from "./components/CartCheckoutWrapper";
+import {loadStripe} from "@stripe/stripe-js";
+import {Elements} from "@stripe/react-stripe-js";
 
 function Home() {
   return (
@@ -64,11 +66,14 @@ function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+
 export default function App() {
   return (
     <Router basename="/wowpets">
       <AuthProvider>
         <CartProvider>
+          <Elements stripe={stripePromise}>
           <GoogleOneTap />
           <Toaster position="top-right" />
           <Layout>
@@ -84,7 +89,7 @@ export default function App() {
               }/>
               <Route
                 path="/cart"
-                element={
+                element={ 
                   <ProtectedRoute>
                     <CartCheckoutWrapper />
                   </ProtectedRoute>
@@ -92,6 +97,7 @@ export default function App() {
               />
             </Routes>
           </Layout>
+          </Elements>
         </CartProvider>
       </AuthProvider>
     </Router>
