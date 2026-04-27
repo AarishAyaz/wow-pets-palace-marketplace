@@ -319,6 +319,7 @@ export function CartCheckoutPage({
         paymentMethodType: paymentMethod,
         currency: "eur",
         items,
+
       };
 
       if (paymentMethod === "card") {
@@ -860,6 +861,7 @@ export function CartCheckoutPage({
                                 </Label>
                                 <Input
                                   id="cardNumber"
+                                  required
                                   placeholder="1234 5678 9012 3456"
                                   value={cardDetails.cardNumber}
                                   onChange={(e) =>
@@ -882,6 +884,7 @@ export function CartCheckoutPage({
                                   </Label>
                                   <Input
                                     id="expiry"
+                                    required
                                     placeholder="MM/YY"
                                     value={cardDetails.expiry}
                                     onChange={(e) =>
@@ -903,6 +906,7 @@ export function CartCheckoutPage({
                                   </Label>
                                   <Input
                                     id="cvv"
+                                    required
                                     placeholder="123"
                                     type="password"
                                     value={cardDetails.cvv}
