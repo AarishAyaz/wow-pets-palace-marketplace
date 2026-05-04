@@ -31,6 +31,7 @@ import { Toaster } from "react-hot-toast";
 import CartCheckoutWrapper from "./components/CartCheckoutWrapper";
 import {loadStripe} from "@stripe/stripe-js";
 import {Elements} from "@stripe/react-stripe-js";
+import { PetDetailPage } from "./components/PetDetails";
 
 function Home() {
   return (
@@ -95,6 +96,10 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route path="/PetDetailPage"
+              element= {
+                <PetDetailPage/>
+              } />
             </Routes>
           </Layout>
           </Elements>

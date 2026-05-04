@@ -375,9 +375,9 @@ if (selectedBrands.length > 0) params["brand_id[]"] = selectedBrands;
               </div>
 
               {/* Tags */}
-              <div>
+              <div >
                 <h4 className="font-semibold text-sm mb-2">Filter by Tags</h4>
-                <div className="flex flex-wrap gap-2 mb-3">
+                <div className="grid grid-cols-3 gap-2 mb-3">
                   {tags.map((tag) => {
                     const isActive = selectedTags.includes(tag.id);
 
