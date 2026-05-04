@@ -96,7 +96,7 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route path="/PetDetailPage"
+              <Route path="/pet/:slug"
               element= {
                 <PetDetailPage/>
               } />

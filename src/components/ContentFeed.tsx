@@ -6,6 +6,7 @@ import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { PetDetailPage } from "./PetDetails";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { Item } from "@radix-ui/react-dropdown-menu";
 
 type PetImage ={
   image_url: string;
@@ -179,7 +180,7 @@ const getStatusConfig = (type: string, price: number) => {
               <Card
                 key={item.listing_id}
                 className="group cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl border-0 overflow-hidden"
-                onClick={() => navigate(`/pet/${item.slug || item.pet_id}`)}
+                onClick={() => navigate(`/pet/${item.slug}`)}
               >
                 <div className="relative">
                   <ImageWithFallback
@@ -188,7 +189,7 @@ const getStatusConfig = (type: string, price: number) => {
                     className="w-full h-48 object-cover"
                   />
 
-           <Badge className={`absolute top-3 left-3 border-0 ${statusConfig.badgeColor}`}>
+           <Badge className={`absolute top-3 right-3 border-0 ${statusConfig.badgeColor}`}>
   {item.type.toUpperCase()}
 </Badge>
                 </div>
