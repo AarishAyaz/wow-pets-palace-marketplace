@@ -27,8 +27,8 @@ import { useState } from "react";
 import { useEffect } from "react";
 import { createPaymentIntent, createOrder } from "./order.service";
 import toast from "react-hot-toast";
-import {StripeCardForm} from "./StripeCardForm";
-
+import { StripeCardForm } from "./StripeCardForm";
+import API from "./api";
 
 interface CartItem {
   id: number | string;
@@ -68,6 +68,7 @@ export function CartCheckoutPage({
     email: "",
     phone: "",
     country: "",
+    countryId: 0,
     address: "",
     postal_code: "",
     city: "",
@@ -79,7 +80,6 @@ export function CartCheckoutPage({
     address: "",
     country: "",
   });
-
 
   const [isInitialized, setIsInitialized] = useState(false);
   const [orderPayload, setOrderPayload] = useState<any>(null); // Store order payload for later use in StripeCardForm
@@ -158,6 +158,7 @@ export function CartCheckoutPage({
       fullName,
       email: userData.billing_email || userData.email || "",
       phone: userData.billing_phone || userData.phoneNumber || "",
+      countryId: userData.billing_country_id || "",
       country: userData.billing_country || "",
       address:
         `${userData.billing_address_1 || ""} ${userData.billing_address_2 || ""}`.trim(),
@@ -263,84 +264,118 @@ export function CartCheckoutPage({
     }
   };
 
-const handlePlaceOrder = async () => {
-  try {
-    if (!billingDetails.fullName || !billingDetails.email || !billingDetails.phone) {
-      alert("Please fill in all required billing details");
-      return;
+  const [countries, setCountries] = useState<any[]>([]);
+
+  const fetchCountries = async () => {
+    try {
+      const res = await API.get("/authUser/getCountries");
+      setCountries(res.data.data || []);
+    } catch (error) {
+      console.error("Failed to fetch countries");
+      toast.error("Failed to load countries");
     }
+  };
+  useEffect(() => {
+    fetchCountries();
+  }, []);
+  useEffect(() => {
+    if (
+      countries.length &&
+      billingDetails.country &&
+      !billingDetails.countryId
+    ) {
+      const match = countries.find((c) => c.name === billingDetails.country);
 
-    setIsProcessing(true);
+      if (match) {
+        setBillingDetails((prev) => ({
+          ...prev,
+          countryId: match.id,
+        }));
+      }
+    }
+  }, [countries, billingDetails.country]);
+  const handlePlaceOrder = async () => {
+    try {
+      if (
+        !billingDetails.fullName ||
+        !billingDetails.email ||
+        !billingDetails.phone
+      ) {
+        alert("Please fill in all required billing details");
+        return;
+      }
 
-    const items = cartItems.map((item) => ({
-      id: Number(item.id),
-      quantity: item.quantity,
-    }));
+      setIsProcessing(true);
 
-    const billingName = splitName(billingDetails.fullName);
-    const shippingName = splitName(shippingDetails.fullName);
+      const items = cartItems.map((item) => ({
+        id: Number(item.id),
+        quantity: item.quantity,
+      }));
 
-    const orderPayload = {
-      billingDetails: {
-        firstName: billingName.firstName,
-        lastName: billingName.lastName,
-        company: "",
-        country: billingDetails.country,
-        address1: billingDetails.address || "N/A",
-        address2: "",
-        city: billingDetails.city || "N/A",
-        state: billingDetails.state || "N/A",
-        zipCode: billingDetails.postal_code || "0000",
-        phone: billingDetails.phone || "0000000000",
-        email: billingDetails.email,
-      },
-      shippingDetails: {
-        firstName: shippingName.firstName,
-        lastName: shippingName.lastName,
-        company: "",
-        country: shippingDetails.country,
-        address1: shippingDetails.address || "N/A",
-        address2: "",
-        city: billingDetails.city || "N/A",
-        state: billingDetails.state || "N/A",
-        zipCode: billingDetails.postal_code || "0000",
-        phone: billingDetails.phone || "0000000000",
-        email: billingDetails.email,
-      },
-      contact_phone: billingDetails.phone || "0000000000",
-      shop_id: shop_id,
-      name: shopName,
-      shipping_cost: shippingCharge,
-      paymentMethodType: paymentMethod,
-      currency: "eur",
-      items,
-    };
+      const billingName = splitName(billingDetails.fullName);
+      const shippingName = splitName(shippingDetails.fullName);
 
-    if (paymentMethod === "card") {
-      const intentRes = await createPaymentIntent({
-        paymentMethodType: "card",
-        Currency: "eur",
+      const orderPayload = {
+        billingDetails: {
+          firstName: billingName.firstName,
+          lastName: billingName.lastName,
+          company: "",
+          country: billingDetails.country,
+          address1: billingDetails.address || "N/A",
+          address2: "",
+          city: billingDetails.city || "N/A",
+          state: billingDetails.state || "N/A",
+          zipCode: billingDetails.postal_code || "0000",
+          phone: billingDetails.phone || "0000000000",
+          email: billingDetails.email,
+        },
+        shippingDetails: {
+          firstName: shippingName.firstName,
+          lastName: shippingName.lastName,
+          company: "",
+          country: shippingDetails.country,
+          address1: shippingDetails.address || "N/A",
+          address2: "",
+          city: billingDetails.city || "N/A",
+          state: billingDetails.state || "N/A",
+          zipCode: billingDetails.postal_code || "0000",
+          phone: billingDetails.phone || "0000000000",
+          email: billingDetails.email,
+        },
+        contact_phone: billingDetails.phone || "0000000000",
+        shop_id: shop_id,
+        name: shopName,
+        shipping_cost: shippingCharge,
+        paymentMethodType: paymentMethod,
+        currency: "eur",
         items,
-      });
+      };
 
-      setClientSecret(intentRes.client_secret);
-      setOrderPayload(orderPayload); // store for later use in StripeCardForm
-      setShowStripe(true);
-    } else {
-      // COD — skip intent, go straight to order
-      const orderRes = await createOrder(orderPayload);
-      console.log("Order response:", orderRes);
-      toast.success("Order placed successfully!");
-      onUpdateCart([]);
-      if (onNavigateHome) onNavigateHome();
+      if (paymentMethod === "card") {
+        const intentRes = await createPaymentIntent({
+          paymentMethodType: "card",
+          Currency: "eur",
+          items,
+        });
+
+        setClientSecret(intentRes.client_secret);
+        setOrderPayload(orderPayload); // store for later use in StripeCardForm
+        setShowStripe(true);
+      } else {
+        // COD — skip intent, go straight to order
+        const orderRes = await createOrder(orderPayload);
+        console.log("Order response:", orderRes);
+        toast.success("Order placed successfully!");
+        onUpdateCart([]);
+        if (onNavigateHome) onNavigateHome();
+      }
+    } catch (error) {
+      console.error("Error placing order:", error);
+      toast.error("Failed to place order. Please try again.");
+    } finally {
+      setIsProcessing(false);
     }
-  } catch (error) {
-    console.error("Error placing order:", error);
-    toast.error("Failed to place order. Please try again.");
-  } finally {
-    setIsProcessing(false);
-  }
-};
+  };
   return (
     <div className="min-h-screen bg-background">
       {/* <Header onNavigateHome={onNavigateHome} cartItemCount=0 /> */}
@@ -473,18 +508,28 @@ const handlePlaceOrder = async () => {
                           Country *
                         </Label>
                         <div className="relative">
-                          <Input
-                            id="country"
-                            placeholder="United States"
-                            value={billingDetails.country}
-                            onChange={(e) =>
+                          <select
+                            className="w-full rounded-xl border px-3 py-2 border-primary/30 focus:border-primary"
+                            value={billingDetails.countryId || ""}
+                            onChange={(e) => {
+                              const selected = countries.find(
+                                (c) => c.id == e.target.value,
+                              );
+
                               setBillingDetails({
                                 ...billingDetails,
-                                country: e.target.value,
-                              })
-                            }
-                            className="pl-10 rounded-xl border-primary/30 focus:border-primary"
-                          />
+                                countryId: Number(e.target.value), // for dropdown control
+                                country: selected?.name || "", // for API
+                              });
+                            }}
+                          >
+                            <option value="">Select Country</option>
+                            {countries.map((c) => (
+                              <option key={c.id} value={c.id}>
+                                {c.name}
+                              </option>
+                            ))}
+                          </select>
                         </div>
                       </div>
                     </div>
@@ -576,20 +621,29 @@ const handlePlaceOrder = async () => {
                           >
                             Country
                           </Label>
-                          <Input
-                            id="shippingCountry"
-                            placeholder="United States"
-                            value={shippingDetails.country}
-                            onChange={(e) =>
+                          <select
+                            className="w-full rounded-xl border px-3 py-2 border-primary/30 focus:border-primary"
+                            value={shippingDetails.country || ""}
+                            onChange={(e) => {
+                              const selected = countries.find(
+                                (c) => c.name == e.target.value,
+                              );
+
                               setShippingDetails({
                                 ...shippingDetails,
-                                country: e.target.value,
-                              })
-                            }
-                            className="rounded-xl border-primary/30 focus:border-primary"
-                          />
+                                country: selected?.name || "",
+                              });
+                            }}
+                          >
+                            <option value="">Select Country</option>
+                            {countries.map((c) => (
+                              <option key={c.id} value={c.name}>
+                                {c.name}
+                              </option>
+                            ))}
+                          </select>
                         </div>
-                        <div className="md:col-span-2 space-y-2">
+                        <div className="space-y-2">
                           <Label
                             htmlFor="shippingAddress"
                             className="text-foreground"
@@ -837,23 +891,30 @@ const handlePlaceOrder = async () => {
                           </div>
 
                           {/* Card Details - Show when card is selected */}
-                          {paymentMethod === "card" && showStripe && clientSecret && (
-  <StripeCardForm
-    clientSecret={clientSecret}
-    onBack={() => setShowStripe(false)}
-    onSuccess={async () => {
-      try {
-        const orderRes = await createOrder(orderPayload);
-        console.log("Order response:", orderRes);
-        toast.success("Payment successful & order placed!");
-        onUpdateCart([]);
-        if (onNavigateHome) onNavigateHome();
-      } catch (err) {
-        toast.error("Payment succeeded but order failed. Contact support.");
-      }
-    }}
-  />
-)}
+                          {paymentMethod === "card" &&
+                            showStripe &&
+                            clientSecret && (
+                              <StripeCardForm
+                                clientSecret={clientSecret}
+                                onBack={() => setShowStripe(false)}
+                                onSuccess={async () => {
+                                  try {
+                                    const orderRes =
+                                      await createOrder(orderPayload);
+                                    console.log("Order response:", orderRes);
+                                    toast.success(
+                                      "Payment successful & order placed!",
+                                    );
+                                    onUpdateCart([]);
+                                    if (onNavigateHome) onNavigateHome();
+                                  } catch (err) {
+                                    toast.error(
+                                      "Payment succeeded but order failed. Contact support.",
+                                    );
+                                  }
+                                }}
+                              />
+                            )}
 
                           {/* PayPal */}
                           <div
@@ -917,7 +978,9 @@ const handlePlaceOrder = async () => {
                     <Button
                       size="lg"
                       onClick={handlePlaceOrder}
-                      disabled={isProcessing || cartItems.length === 0 || showStripe}
+                      disabled={
+                        isProcessing || cartItems.length === 0 || showStripe
+                      }
                       className="w-full rounded-full bg-gradient-to-r from-primary to-secondary text-white hover:from-primary/90 hover:to-secondary/90 shadow-lg hover:shadow-xl transition-all duration-300 h-14 text-lg"
                     >
                       {isProcessing ? (

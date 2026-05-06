@@ -8,11 +8,12 @@ import { useState, useRef, useEffect } from 'react';
 
 export function Header() {
   const navigate = useNavigate();
-  const { getTotalItems } = useCart();
+  const { getTotalItems,cartPulse } = useCart();
   const {user, isAuthenticated, setUser} = useAuth();
 
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
 
   //close dropdown when clicking outside
 
@@ -85,14 +86,24 @@ export function Header() {
                 3
               </Badge>
             </Button>
-            <Button
-            onClick={()=>navigate("/cart")}
-            variant="ghost" size="icon" className="relative">
-              <ShoppingCart className="w-5 h-5" />
-              <Badge className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center p-0 bg-secondary text-xs">
+           <Button
+  onClick={() => navigate("/cart")}
+  variant="ghost"
+  size="icon"
+  className={`relative transition-transform duration-300 ${
+    cartPulse ? "scale-125" : "scale-100"
+  }`}
+>
+  <ShoppingCart className="w-5 h-5" />
+
+ <Badge
+  className={`absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center p-0 bg-secondary text-xs transition-all duration-300 ${
+    cartPulse ? "animate-bounce" : ""
+  }`}
+>
   {getTotalItems()}
 </Badge>
-            </Button>
+</Button>
             {/* <Button variant="ghost" size="icon" onClick={()=>navigate("/login")}>
               <User className="w-5 h-5" />
             </Button> */}

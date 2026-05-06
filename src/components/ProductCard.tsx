@@ -4,7 +4,8 @@ import { Button } from "./ui/button";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { ShoppingCart, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import {useCart} from "@/context/CartContext";
+import { useCart } from "@/context/CartContext";
+import { useState } from "react";
 
 interface ProductCardProps {
   id: number | string;
@@ -44,103 +45,126 @@ export function ProductCard({
       ? +(price * (1 - discountPercentage / 100)).toFixed(2)
       : price;
 
-      const { addToCart } = useCart();
-
+  const { addToCart } = useCart();
+  const [adding, setAdding] = useState(false);
   return (
     <Card
-  onClick={() => navigate(`/product/${slug}`)}
-  className="group flex flex-col h-full overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
->
-  {/* Image */}
-<div className="relative h-70 w-full">
-  <div className="w-full h-56 lg:h-52 bg-gray-50 flex items-center justify-center overflow-hidden">
-    <ImageWithFallback
-      src={image}
-      alt={name}
-      className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105"
-      loading="lazy"
-    />
-  </div>
-           <div className="absolute inset-0 bg-gradient-to-t from-black/5 via-transparent to-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-    {discountPercentage > 0 && (
-      <Badge className="absolute top-3 left-3 bg-destructive text-destructive-foreground text-xs">
-        {discountPercentage}% OFF
-      </Badge>
-    )}
-    {category && (
-      <Badge className="absolute top-3 right-3 text-xs bg-primary/10 text-primary border-primary/20">
-        {category}
-      </Badge>
-    )}
-  </div>
-
-  {/* Content */}
-  <CardContent className="flex flex-col flex-1  p-4 gap-3">
-    <h3 className="text-primary text-sm lg:text-base font-medium line-clamp-2">
-      {name}
-    </h3>
-
-    {/* Rating */}
-    <div className="flex items-center gap-2">
-      <div className="flex items-center gap-0.5">
-        {[...Array(5)].map((_, i) => (
-          <Star
-            key={i}
-            className={`w-4 h-4 ${
-              i < Math.floor(rating ?? 0)
-                ? "fill-secondary text-secondary"
-                : "text-gray-300"
-            }`}
+      onClick={() => navigate(`/product/${slug}`)}
+      className="group flex flex-col h-full overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
+    >
+      {/* Image */}
+      <div className="relative h-70 w-full">
+        <div className="w-full h-56 lg:h-52 bg-gray-50 flex items-center justify-center overflow-hidden">
+          <ImageWithFallback
+            src={image}
+            alt={name}
+            className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105"
+            loading="lazy"
           />
-        ))}
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/5 via-transparent to-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        {discountPercentage > 0 && (
+          <Badge className="absolute top-3 left-3 bg-destructive text-destructive-foreground text-xs">
+            {discountPercentage}% OFF
+          </Badge>
+        )}
+        {category && (
+          <Badge className="absolute top-3 right-3 text-xs bg-primary/10 text-primary border-primary/20">
+            {category}
+          </Badge>
+        )}
       </div>
-      {reviewsCount !== null && (
-        <span className="text-xs text-muted-foreground hidden sm:inline">
-          ({rating})
-        </span>
-      )}
-    </div>
 
-    {/* Pricing */}
-<div className="flex justify-between items-center">
-  <div className="flex items-center gap-2">
-    <span className="text-lg lg:text-xl font-semibold text-primary">
-      ${discountedPrice}
-    </span>
-    {originalPrice && (
-      <span className="text-sm text-muted-foreground line-through">
-        ${originalPrice}
-      </span>
-    )}
-  </div>
-  {originalPrice && (
-    <span className="text-xs text-secondary bg-secondary/10 px-2 py-0.5 rounded">
-      Save ${(originalPrice - discountedPrice).toFixed(2)}
-    </span>
-  )}
-</div>
+      {/* Content */}
+      <CardContent className="flex flex-col flex-1  p-4 gap-3">
+        <h3 className="text-primary text-sm lg:text-base font-medium line-clamp-2">
+          {name}
+        </h3>
 
-    {/* Add to Cart */}
-    <Button 
-    onClick={(e)=>{
-      e.stopPropagation();
-      e.preventDefault();
-      addToCart({
-        id,
-        name,
-        price: discountedPrice,
-        image,
-        quantity: 1,
-        shipping_cost: shipping_cost || 0, // Replace with actual shipping cost if available
-        shop_id,
-        shopName,
-      })
-    }}
-    className="mt-auto w-full bg-gradient-to-r from-primary to-primary/80 text-xs lg:text-sm flex items-center  justify-center gap-1">
-      <ShoppingCart className="w-4 h-4 group-hover:scale-110 transition-transform" />
-      Add to Cart
-    </Button>
-  </CardContent>
-</Card>
+        {/* Rating */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-0.5">
+            {[...Array(5)].map((_, i) => (
+              <Star
+                key={i}
+                className={`w-4 h-4 ${
+                  i < Math.floor(rating ?? 0)
+                    ? "fill-secondary text-secondary"
+                    : "text-gray-300"
+                }`}
+              />
+            ))}
+          </div>
+          {reviewsCount !== null && (
+            <span className="text-xs text-muted-foreground hidden sm:inline">
+              ({rating})
+            </span>
+          )}
+        </div>
+
+        {/* Pricing */}
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <span className="text-lg lg:text-xl font-semibold text-primary">
+              ${discountedPrice}
+            </span>
+            {originalPrice && (
+              <span className="text-sm text-muted-foreground line-through">
+                ${originalPrice}
+              </span>
+            )}
+          </div>
+          {originalPrice && (
+            <span className="text-xs text-secondary bg-secondary/10 px-2 py-0.5 rounded">
+              Save ${(originalPrice - discountedPrice).toFixed(2)}
+            </span>
+          )}
+        </div>
+
+        {/* Add to Cart */}
+        <Button
+          onClick={(e: any) => {
+            e.stopPropagation();
+
+            setAdding(true);
+
+            addToCart({
+              id,
+              name,
+              price: discountedPrice,
+              image,
+              quantity: 1,
+              shipping_cost: shipping_cost || 0,
+              shop_id,
+              shopName,
+            });
+
+            setTimeout(() => setAdding(false), 500);
+          }}
+          className={`
+    mt-auto w-full text-xs lg:text-sm flex items-center justify-center gap-2
+    bg-gradient-to-r from-primary to-primary/80
+    transition-all duration-300 ease-out
+    relative overflow-hidden
+
+    ${adding ? "scale-[0.98] opacity-90" : "hover:scale-[1.02]"}
+  `}
+        >
+          {/* shine overlay */}
+          <span className="absolute inset-0 bg-white/10 translate-x-[-100%] animate-[shine_0.6s_ease-out]" />
+
+          <ShoppingCart
+            className={`
+      w-4 h-4 transition-all duration-700
+      ${adding ? "scale-125 rotate-12" : "group-hover:scale-110"}
+    `}
+          />
+
+          <span className="relative z-10">
+            {adding ? "Added!" : "Add to Cart"}
+          </span>
+        </Button>
+      </CardContent>
+    </Card>
   );
 }

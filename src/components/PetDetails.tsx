@@ -1,19 +1,14 @@
 import {
-  ArrowLeft,
   Heart,
   Share2,
   MapPin,
-  Calendar,
-  Info,
-  ChevronLeft,
-  ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Phone,
   MessageCircle,
   Star,
   Check,
   X,
-  ChevronDown,
-  ChevronUp,
   Zap,
   ShieldCheck,
   Tag,
@@ -22,24 +17,39 @@ import {
   User as UserIcon,
   Navigation,
   Mail,
+  Truck,
+  Shield,
+  RefreshCw,
+  Info,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
-import { Header } from "./Header";
-import { Footer } from "./Footer";
 import { Button } from "./ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Separator } from "./ui/separator";
-import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
-interface PetDetailPageProps {
-  slug: string;
-  onNavigateBack?: () => void;
-  onNavigateHome?: () => void;
-  cartItemCount?: number;
-  onNavigateToCart?: () => void;
-  onNavigateToProfile?: () => void;
+// Inject keyframes once (same as ProductDetailsPage)
+const shineKeyframes = `
+@keyframes shine-sweep {
+  0%   { transform: translateX(-120%) skewX(-15deg); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateX(220%) skewX(-15deg); opacity: 0; }
+}
+`;
+
+if (typeof document !== "undefined") {
+  const styleId = "__pet-shine-style__";
+  if (!document.getElementById(styleId)) {
+    const style = document.createElement("style");
+    style.id = styleId;
+    style.textContent = shineKeyframes;
+    document.head.appendChild(style);
+  }
 }
 
 interface Pet {
@@ -73,97 +83,55 @@ interface Pet {
     longitude: number;
   };
   owner: {
-    name: string;
+    owner_first_name: string;
+    owner_last_name: string;
     image: string;
+    email?: string;
+    phone?: string;
     rating?: number;
     verified?: boolean;
   };
 }
 
-export function PetDetailPage({
-  onNavigateBack,
-  onNavigateHome,
-  cartItemCount = 0,
-  onNavigateToCart,
-  onNavigateToProfile,
-}: PetDetailPageProps) {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+export function PetDetailPage() {
   const { slug } = useParams();
-  // Mock pet data
-  // const pet: Pet = {
-  //   id: petId,
-  //   name: 'Luna',
-  //   status: 'adoption',
-  //   images: [
-  //     'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800',
-  //     'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800',
-  //     'https://images.unsplash.com/photo-1574158622682-e40e69881006?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800',
-  //     'https://images.unsplash.com/photo-1561948955-570b270e7c36?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800'
-  //   ],
-  //   breed: 'Golden Retriever',
-  //   category: 'Dog',
-  //   gender: 'Female',
-  //   size: 'Large',
-  //   activityLevel: 'High',
-  //   description:
-  //     "Meet Luna, a beautiful and energetic Golden Retriever who's looking for her forever home! Luna is a 2-year-old bundle of joy who loves outdoor adventures, playing fetch, and cuddling on the couch after a long day of fun. She's incredibly friendly with both adults and children, making her the perfect family companion. Luna is house-trained, knows basic commands, and walks well on a leash. She gets along wonderfully with other dogs and would thrive in a home with a yard where she can run and play. Luna has been spayed, is up-to-date on all vaccinations, and comes with a clean bill of health from our veterinarian. She's microchipped for safety and ready to bring endless love and happiness to her new family. If you're looking for a loyal, affectionate, and playful companion, Luna is waiting to meet you!",
-  //   dateOfBirth: '2024-03-15',
-  //   color: 'Golden',
-  //   temperament: ['Friendly', 'Playful', 'Gentle', 'Loyal'],
-  //   microchipped: true,
-  //   microchipId: 'MC-984756321',
-  //   neutered: true,
-  //   tags: ['family-friendly', 'good-with-kids', 'energetic', 'house-trained', 'vaccinated'],
-  //   adoptionStatus: 'Available',
-  //   adoptionSource: 'Happy Paws Rescue Center',
-  //   location: {
-  //     country: 'United States',
-  //     address: '123 Rescue Lane, San Francisco, CA 94102',
-  //     latitude: 37.7749,
-  //     longitude: -122.4194
-  //   },
-  //   owner: {
-  //     name: 'Happy Paws Rescue',
-  //     image:
-  //       'https://images.unsplash.com/photo-1494790108377-be9c29b29330?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400',
-  //     rating: 4.9,
-  //     verified: true
-  //   }
-  // };
-  const [loading, setLoading] = useState(true);
   const [pet, setPet] = useState<Pet | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [selectedImage, setSelectedImage] = useState<string>("");
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     const fetchPet = async () => {
       try {
-        setLoading(true);
+        setIsLoading(true);
         const res = await fetch(
           `https://www.wowpetspalace.com/test/pets/pet-listings?slug=${slug}`,
         );
-
         const data = await res.json();
 
         if (data?.success && data?.data) {
           const apiPet = data.data[0];
 
+          const images: string[] =
+            apiPet.images?.map(
+              (img: any) => `https://wowpetspalace.com/test/${img.image_url}`,
+            ) || [];
+
           const formattedPet: Pet = {
             id: apiPet.pet_id?.toString() || "",
             name: apiPet.pet_name || "Unknown",
             status: apiPet.type || "adoption",
-            images: apiPet.images?.map(
-              (img: any) => `https://wowpetspalace.com/test/${img.image_url}`,
-            ) || ["/fallback.jpg"],
-
+            images,
             breed: apiPet.breed || "Unknown",
             category: apiPet.type || "Pet",
             gender: "Male",
             size: "Medium",
             activityLevel: "Medium",
             description: apiPet.description || "No description available",
-            dateOfBirth: "2023-01-01",
+            dateOfBirth:  apiPet.dateofbirth || "2023-01-01",
             color: "Unknown",
             temperament: [],
             microchipped: false,
@@ -173,171 +141,133 @@ export function PetDetailPage({
             location: {
               country: "Pakistan",
               address: apiPet.address || "Unknown location",
-              latitude: 0,
-              longitude: 0,
+              latitude: apiPet.latitude || 0,
+              longitude: apiPet.longitude || 0,
             },
             owner: {
-              name: "Pet Owner",
-              image: "/fallback.jpg",
+              owner_first_name: apiPet.owner_first_name,
+              owner_last_name: apiPet.owner_last_name,
+              image: apiPet.owner_profile_photo,
+              email: apiPet.owner_email,
+              phone: apiPet.owner_phone,
             },
           };
 
           setPet(formattedPet);
-        } else {
-          setError("Pet not found");
+          if (images.length > 0) setSelectedImage(images[0]);
         }
       } catch (err) {
         console.error(err);
-        setError("Failed to load pet");
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
     if (slug) fetchPet();
   }, [slug]);
-  // Related products
-  const relatedProducts = [
-    {
-      id: "1",
-      name: "Premium Dog Food",
-      price: 49.99,
-      image:
-        "https://images.unsplash.com/photo-1708746333832-9a8cde4a0cfa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
-    },
-    {
-      id: "2",
-      name: "Interactive Dog Toy",
-      price: 24.99,
-      image:
-        "https://images.unsplash.com/photo-1596822316110-288c7b8f24f8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
-    },
-    {
-      id: "3",
-      name: "Comfortable Dog Bed",
-      price: 79.99,
-      image:
-        "https://images.unsplash.com/photo-1615751072497-5f5169febe17?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
-    },
-    {
-      id: "4",
-      name: "Dog Leash & Collar Set",
-      price: 34.99,
-      image:
-        "https://images.unsplash.com/photo-1633967135884-b38fb62c22e7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
-    },
-  ];
-
-  // Similar pets
-  const similarPets = [
-    {
-      id: "2",
-      name: "Max",
-      breed: "Golden Retriever",
-      age: "3 years",
-      image:
-        "https://images.unsplash.com/photo-1633967135884-b38fb62c22e7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
-      status: "adoption",
-    },
-    {
-      id: "3",
-      name: "Bella",
-      breed: "Labrador Retriever",
-      age: "2 years",
-      image:
-        "https://images.unsplash.com/photo-1587300003388-59208cc962cb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
-      status: "adoption",
-    },
-    {
-      id: "4",
-      name: "Charlie",
-      breed: "Golden Retriever",
-      age: "1 year",
-      image:
-        "https://images.unsplash.com/photo-1600804931749-2da4ce26c869?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
-      status: "adoption",
-    },
-  ];
-
-  // Related articles
-  const relatedArticles = [
-    {
-      id: "1",
-      title: "Complete Guide to Golden Retriever Care",
-      image:
-        "https://images.unsplash.com/photo-1601758228041-f3b2795255f1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
-      readTime: "8 min read",
-    },
-    {
-      id: "2",
-      title: "Training Your New Puppy: Essential Tips",
-      image:
-        "https://images.unsplash.com/photo-1587300003388-59208cc962cb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
-      readTime: "6 min read",
-    },
-    {
-      id: "3",
-      title: "Nutrition Guide for Large Breed Dogs",
-      image:
-        "https://images.unsplash.com/photo-1600804931749-2da4ce26c869?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
-      readTime: "10 min read",
-    },
-  ];
 
   const nextImage = () => {
     if (!pet?.images?.length) return;
-    setCurrentImageIndex((prev) => (prev + 1) % pet.images.length);
+    const nextIndex = (currentImageIndex + 1) % pet.images.length;
+    setCurrentImageIndex(nextIndex);
+    setSelectedImage(pet.images[nextIndex]);
   };
 
   const prevImage = () => {
     if (!pet?.images?.length) return;
-    setCurrentImageIndex(
-      (prev) => (prev - 1 + pet.images.length) % pet.images.length,
-    );
+    const prevIndex =
+      (currentImageIndex - 1 + pet.images.length) % pet.images.length;
+    setCurrentImageIndex(prevIndex);
+    setSelectedImage(pet.images[prevIndex]);
   };
+
   const handleShare = () => {
     if (!pet) return;
-
     if (navigator.share) {
       navigator
         .share({
           title: `Meet ${pet.name}!`,
-          text: `Check out ${pet.name}, a ${pet.breed} available for adoption!`,
+          text: `Check out ${pet.name}, a ${pet.breed}!`,
           url: window.location.href,
         })
-        .catch(() => {
-          // Fallback for browsers that don't support share
-          alert("Share link copied to clipboard!");
-        });
-    } else {
-      alert("Share link copied to clipboard!");
+        .catch(() => {});
     }
   };
-  if (!pet) {
-    return <div className="p-10 text-center">Loading...</div>;
+
+const getMapEmbedUrl = () => {
+  if (!pet) return "";
+
+  const { latitude, longitude } = pet.location;
+
+  if (!latitude || !longitude) return "";
+
+  return `https://www.google.com/maps?q=${latitude},${longitude}&z=15&output=embed`;
+};
+
+  const calculateAge = (dob: string) => {
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let years = today.getFullYear() - birthDate.getFullYear();
+    let months = today.getMonth() - birthDate.getMonth();
+    if (months < 0) {
+      years--;
+      months += 12;
+    }
+    if (years > 0) return `${years} yr${years !== 1 ? "s" : ""} ${months} mo`;
+    return `${months} month${months !== 1 ? "s" : ""}`;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="animate-pulse text-muted-foreground">Loading...</div>
+      </div>
+    );
   }
+
+  if (!pet) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Card className="p-8 text-center">
+          <h2 className="text-xl font-semibold mb-2">Pet not found</h2>
+          <p className="text-muted-foreground">
+            The pet you're looking for doesn't exist.
+          </p>
+        </Card>
+      </div>
+    );
+  }
+
+  const hasMultipleImages = pet.images.length > 1;
+
+  const description = pet.description || "No description available.";
+  const shouldShowReadMore = description.length > 200;
+  const truncatedDescription =
+    shouldShowReadMore && !isDescriptionExpanded
+      ? description.slice(0, 200) + "..."
+      : description;
 
   const getStatusBadge = () => {
     switch (pet.status) {
       case "adoption":
         return (
-          <Badge className="bg-green-500 text-white border-0 text-base px-4 py-2">
-            <Check className="w-4 h-4 mr-2" />
-            Available for Adoption
+          <Badge className="!bg-green-600 !text-white text-sm font-bold px-3 py-1.5 shadow-md rounded-md">
+            <Check className="w-3 h-3 mr-1" /> Available for Adoption
           </Badge>
         );
       case "sale":
         return (
-          <Badge className="bg-secondary text-white border-0 text-base px-4 py-2">
-            <DollarSign className="w-4 h-4 mr-2" />
-            For Sale
+          <Badge
+            variant="destructive"
+            className="text-sm font-bold px-3 py-1.5 shadow-md rounded-md"
+          >
+            <DollarSign className="w-3 h-3 mr-1" /> For Sale
           </Badge>
         );
       case "lost":
         return (
-          <Badge className="bg-destructive text-white border-0 text-base px-4 py-2">
-            <AlertCircle className="w-4 h-4 mr-2" />
-            Lost Pet
+          <Badge className="!bg-orange-500 !text-white text-sm font-bold px-3 py-1.5 shadow-md rounded-md">
+            <AlertCircle className="w-3 h-3 mr-1" /> Lost Pet
           </Badge>
         );
     }
@@ -349,142 +279,196 @@ export function PetDetailPage({
         return (
           <Button
             size="lg"
-            className="w-full rounded-full bg-gradient-to-r from-primary to-secondary text-white hover:from-primary/90 hover:to-secondary/90 shadow-lg hover:shadow-xl transition-all duration-300 text-lg h-14"
+            className="flex-1 gap-2 h-12 text-base font-semibold"
           >
-            <Heart className="w-5 h-5 mr-2" />
-            Adopt {pet.name}
+            <Heart className="w-5 h-5" /> Adopt {pet.name}
           </Button>
         );
       case "sale":
         return (
           <Button
             size="lg"
-            className="w-full rounded-full bg-gradient-to-r from-primary to-secondary text-white hover:from-primary/90 hover:to-secondary/90 shadow-lg hover:shadow-xl transition-all duration-300 text-lg h-14"
+            className="flex-1 gap-2 h-12 text-base font-semibold"
           >
-            <MessageCircle className="w-5 h-5 mr-2" />
-            Contact Seller
+            <MessageCircle className="w-5 h-5" /> Contact Seller
           </Button>
         );
       case "lost":
         return (
           <Button
             size="lg"
-            className="w-full rounded-full bg-gradient-to-r from-primary to-secondary text-white hover:from-primary/90 hover:to-secondary/90 shadow-lg hover:shadow-xl transition-all duration-300 text-lg h-14"
+            className="flex-1 gap-2 h-12 text-base font-semibold"
           >
-            <Navigation className="w-5 h-5 mr-2" />
-            Report Sighting
+            <Navigation className="w-5 h-5" /> Report Sighting
           </Button>
         );
     }
   };
 
-  const calculateAge = (dob: string) => {
-    const birthDate = new Date(dob);
-    const today = new Date();
-    let years = today.getFullYear() - birthDate.getFullYear();
-    let months = today.getMonth() - birthDate.getMonth();
-
-    if (months < 0) {
-      years--;
-      months += 12;
-    }
-
-    if (years > 0) {
-      return `${years} ${years === 1 ? "year" : "years"} ${months} ${
-        months === 1 ? "month" : "months"
-      }`;
-    }
-    return `${months} ${months === 1 ? "month" : "months"}`;
-  };
-
   return (
     <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-8">
-        {/* Custom Header */}
-        <div className="flex items-center justify-between mb-6">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onNavigateBack}
-            className="rounded-full hover:bg-primary/10"
-          >
-            <ArrowLeft className="w-5 h-5 text-primary" />
-          </Button>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsFavorite(!isFavorite)}
-              className="rounded-full hover:bg-primary/10"
-            >
-              <Heart
-                className={`w-5 h-5 ${
-                  isFavorite
-                    ? "fill-destructive text-destructive"
-                    : "text-primary"
-                }`}
-              />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleShare}
-              className="rounded-full hover:bg-primary/10"
-            >
-              <Share2 className="w-5 h-5 text-primary" />
-            </Button>
-          </div>
-        </div>
+      <div className="container mx-auto px-4 py-6 lg:py-12">
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+          <a href="/" className="hover:text-foreground transition-colors">
+            Home
+          </a>
+          <span>/</span>
+          <a href="/pets" className="hover:text-foreground transition-colors">
+            Pets
+          </a>
+          <span>/</span>
+          <span className="text-foreground font-medium">{pet.breed}</span>
+        </nav>
 
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Left Column - Images */}
           <div className="space-y-4">
-            {/* Image Gallery */}
-            <div className="relative aspect-square rounded-3xl overflow-hidden bg-muted shadow-xl">
-              <ImageWithFallback
-                src={pet.images?.[currentImageIndex] || "/fallback.jpg"}
-                alt={`${pet.name} - Image ${currentImageIndex + 1}`}
-                className="w-full h-full object-cover"
-              />
+            {/* Main Image with Shine Effect */}
+            <Card className="overflow-hidden border-2 border-border/50">
+              <div
+                className="relative group mx-auto w-full"
+                style={{
+                  height: "70vh",
+                  maxHeight: "70vh",
+                  overflow: "hidden",
+                }}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+              >
+                <img
+                  src={selectedImage || pet.images[0] || "/fallback.jpg"}
+                  alt={pet.name}
+                  className="w-full h-full object-contain relative z-10 bg-muted/20"
+                  style={{
+                    transition:
+                      "transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+                    transform: isHovered ? "scale(1.04)" : "scale(1)",
+                  }}
+                />
 
-              {/* Navigation Arrows */}
-              {pet.images?.length > 1 && (
-                <>
-                  <button
-                    onClick={prevImage}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow-lg hover:bg-white transition-all hover:scale-110"
-                  >
-                    <ChevronLeft className="w-6 h-6 text-primary" />
-                  </button>
-                  <button
-                    onClick={nextImage}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow-lg hover:bg-white transition-all hover:scale-110"
-                  >
-                    <ChevronRight className="w-6 h-6 text-primary" />
-                  </button>
-                </>
-              )}
+                {/* Shine overlay */}
+                <span
+                  aria-hidden="true"
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    zIndex: 20,
+                    pointerEvents: "none",
+                    overflow: "hidden",
+                  }}
+                >
+                  <span
+                    style={{
+                      position: "absolute",
+                      top: "-50%",
+                      left: "-50%",
+                      width: "60%",
+                      height: "200%",
+                      background:
+                        "linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.55) 50%, rgba(255,255,255,0.15) 58%, transparent 70%)",
+                      transform: "translateX(-120%) skewX(-15deg)",
+                      opacity: 0,
+                      animation: isHovered
+                        ? "shine-sweep 0.75s cubic-bezier(0.4, 0, 0.2, 1) forwards"
+                        : "none",
+                    }}
+                  />
+                </span>
 
-              {/* Status Badge Overlay */}
-              <div className="absolute top-4 left-4">{getStatusBadge()}</div>
-            </div>
+                {/* Vignette */}
+                <span
+                  aria-hidden="true"
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    zIndex: 11,
+                    pointerEvents: "none",
+                    background:
+                      "radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.04) 100%)",
+                    transition: "opacity 0.3s ease",
+                    opacity: isHovered ? 1 : 0,
+                  }}
+                />
+
+                {/* Nav arrows for multiple images */}
+                {hasMultipleImages && (
+                  <>
+                    <button
+                      onClick={prevImage}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow-lg hover:bg-white transition-all z-30"
+                    >
+                      <ChevronLeft className="w-5 h-5 text-primary" />
+                    </button>
+                    <button
+                      onClick={nextImage}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow-lg hover:bg-white transition-all z-30"
+                    >
+                      <ChevronRight className="w-5 h-5 text-primary" />
+                    </button>
+                  </>
+                )}
+
+                {/* Status Badge Overlay */}
+                <div className="absolute top-4 left-4 right-4 flex items-start justify-between gap-2 z-30">
+                  {getStatusBadge()}
+                  {pet.breed && (
+                    <Badge className="ml-auto bg-background/95 backdrop-blur-sm text-foreground border border-border/50 text-sm font-medium px-3 py-1.5 shadow-md">
+                      {pet.breed}
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Quick Actions */}
+                <div
+                  className="absolute top-4 right-4 flex flex-col gap-2 z-30"
+                  style={{
+                    opacity: isHovered ? 1 : 0,
+                    transform: isHovered ? "translateX(0)" : "translateX(8px)",
+                    transition: "opacity 0.25s ease, transform 0.25s ease",
+                  }}
+                >
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    className="h-10 w-10 rounded-full shadow-lg backdrop-blur-sm"
+                    onClick={() => setIsFavorite(!isFavorite)}
+                  >
+                    <Heart
+                      className={`h-4 w-4 ${isFavorite ? "fill-destructive text-destructive" : ""}`}
+                    />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    className="h-10 w-10 rounded-full shadow-lg backdrop-blur-sm"
+                    onClick={handleShare}
+                  >
+                    <Share2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </Card>
 
             {/* Thumbnail Gallery */}
-            {pet.images?.length > 1 && (
-              <div className="grid grid-cols-4 gap-3">
-                {pet.images.map((image, index) => (
+            {hasMultipleImages && (
+              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+                {pet.images.map((img, index) => (
                   <button
                     key={index}
-                    onClick={() => setCurrentImageIndex(index)}
-                    className={`aspect-square rounded-xl overflow-hidden border-2 transition-all ${
-                      index === currentImageIndex
-                        ? "border-primary scale-105"
-                        : "border-transparent opacity-70 hover:opacity-100"
+                    onClick={() => {
+                      setSelectedImage(img);
+                      setCurrentImageIndex(index);
+                    }}
+                    className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                      selectedImage === img
+                        ? "border-primary shadow-md ring-2 ring-primary/20"
+                        : "border-border/50 hover:border-primary/50 hover:shadow-sm"
                     }`}
                   >
-                    <ImageWithFallback
-                      src={image}
-                      alt={`${pet.name} thumbnail ${index + 1}`}
+                    <img
+                      src={img}
+                      alt={`${pet.name} - View ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
                   </button>
@@ -493,23 +477,20 @@ export function PetDetailPage({
             )}
           </div>
 
-          {/* Right Column - Pet Information */}
-          <div className="space-y-6">
-            {/* Pet Name & Basic Info */}
-            <div>
-              <h1 className="text-primary mb-4">{pet.name}</h1>
-              <div className="flex flex-wrap gap-2 mb-4">
+          {/* Right Column - Pet Info */}
+          <div className="flex flex-col space-y-4 lg:space-y-8">
+            <div className="space-y-3">
+              <h1 className="text-2xl lg:text-4xl font-bold text-foreground leading-tight">
+                {pet.name}
+              </h1>
+
+              {/* Breed & Category badges */}
+              <div className="flex items-center gap-2 flex-wrap mt-2">
                 <Badge
                   variant="outline"
                   className="border-primary/30 text-foreground px-3 py-1"
                 >
                   {pet.breed}
-                </Badge>
-                <Badge
-                  variant="outline"
-                  className="border-primary/30 text-foreground px-3 py-1"
-                >
-                  {pet.category}
                 </Badge>
                 <Badge
                   variant="outline"
@@ -524,7 +505,6 @@ export function PetDetailPage({
                   {pet.size}
                 </Badge>
                 <Badge
-                  variant="outline"
                   className={`px-3 py-1 border-0 ${
                     pet.activityLevel === "High"
                       ? "bg-green-100 text-green-700"
@@ -537,121 +517,152 @@ export function PetDetailPage({
                   {pet.activityLevel} Activity
                 </Badge>
               </div>
+
+              {/* Age & Location row */}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1.5">
+                  <Calendar className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-medium text-foreground">
+                    {calculateAge(pet.dateOfBirth)}
+                  </span>
+                </div>
+                <Separator orientation="vertical" className="h-4" />
+                <div className="flex items-center gap-1.5">
+                  <MapPin className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    {pet.location.address}
+                  </span>
+                </div>
+              </div>
             </div>
 
-            {/* Description */}
-            <Card className="rounded-3xl border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-foreground flex items-center gap-2">
-                  <Info className="w-5 h-5 text-primary" />
-                  About {pet.name}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p
-                  className={`text-muted-foreground leading-relaxed ${
-                    !isDescriptionExpanded ? "line-clamp-4" : ""
-                  }`}
-                >
-                  {pet.description}
-                </p>
-                <Button
-                  variant="ghost"
-                  onClick={() =>
-                    setIsDescriptionExpanded(!isDescriptionExpanded)
-                  }
-                  className="mt-2 text-primary hover:text-primary/80"
-                >
-                  {isDescriptionExpanded ? (
-                    <>
-                      <ChevronUp className="w-4 h-4 mr-2" />
-                      Show Less
-                    </>
-                  ) : (
-                    <>
-                      <ChevronDown className="w-4 h-4 mr-2" />
-                      Read More
-                    </>
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
+            <Separator className="my-6" />
 
-            {/* Pet Details */}
-            <Card className="rounded-3xl border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-foreground">Pet Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Age</p>
-                    <p className="text-foreground">
-                      {calculateAge(pet.dateOfBirth)}
-                    </p>
+            {/* Price (if for sale) */}
+            {pet.status === "sale" && pet.price && pet.price > 0 && (
+              <>
+                <div className="space-y-3">
+                  <div className="flex items-baseline gap-3 flex-wrap">
+                    <span className="text-3xl lg:text-4xl font-bold text-primary">
+                      ${pet.price.toFixed(2)}
+                    </span>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Color</p>
-                    <p className="text-foreground">{pet.color}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">
-                      Microchipped
-                    </p>
-                    <div className="flex items-center gap-2">
-                      {pet.microchipped ? (
-                        <>
-                          <Check className="w-4 h-4 text-green-600" />
-                          <span className="text-foreground">Yes</span>
-                        </>
-                      ) : (
-                        <>
-                          <X className="w-4 h-4 text-destructive" />
-                          <span className="text-foreground">No</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  {pet.microchipId && (
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">
-                        Chip ID
-                      </p>
-                      <p className="text-foreground font-mono text-sm">
-                        {pet.microchipId}
-                      </p>
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">
-                      {pet.gender === "Male" ? "Neutered" : "Spayed"}
-                    </p>
-                    <div className="flex items-center gap-2">
-                      {pet.neutered ? (
-                        <>
-                          <Check className="w-4 h-4 text-green-600" />
-                          <span className="text-foreground">Yes</span>
-                        </>
-                      ) : (
-                        <>
-                          <X className="w-4 h-4 text-destructive" />
-                          <span className="text-foreground">No</span>
-                        </>
-                      )}
-                    </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge
+                      variant="outline"
+                      className="text-sm font-medium px-3 py-1.5"
+                    >
+                      Available
+                    </Badge>
                   </div>
                 </div>
+                <Separator className="my-6" />
+              </>
+            )}
 
-                <Separator />
+            {/* Description */}
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold">About {pet.name}</h3>
+              <div className="text-muted-foreground leading-relaxed">
+                <p>{truncatedDescription}</p>
+                {shouldShowReadMore && (
+                  <Button
+                    variant="link"
+                    onClick={() =>
+                      setIsDescriptionExpanded(!isDescriptionExpanded)
+                    }
+                    className="px-0 mt-2 h-auto text-primary font-semibold"
+                  >
+                    {isDescriptionExpanded ? (
+                      <>
+                        <ChevronUp className="ml-1 h-4 w-4 mr-1" /> Show Less
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="ml-1 h-4 w-4 mr-1" /> Read More
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+            </div>
 
+            <Separator className="my-6" />
+
+            {/* Pet Details Grid */}
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold">Pet Details</h3>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-3">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-2">
+                  <p className="text-xs text-muted-foreground mb-1">Color</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {pet.color}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Category</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {pet.category}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">
+                    Microchipped
+                  </p>
+                  <div className="flex items-center gap-1">
+                    {pet.microchipped ? (
+                      <>
+                        <Check className="w-4 h-4 text-green-600" />
+                        <span className="text-sm font-medium">Yes</span>
+                      </>
+                    ) : (
+                      <>
+                        <X className="w-4 h-4 text-destructive" />
+                        <span className="text-sm font-medium">No</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">
+                    {pet.gender === "Male" ? "Neutered" : "Spayed"}
+                  </p>
+                  <div className="flex items-center gap-1">
+                    {pet.neutered ? (
+                      <>
+                        <Check className="w-4 h-4 text-green-600" />
+                        <span className="text-sm font-medium">Yes</span>
+                      </>
+                    ) : (
+                      <>
+                        <X className="w-4 h-4 text-destructive" />
+                        <span className="text-sm font-medium">No</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                {pet.microchipId && (
+                  <div className="col-span-2">
+                    <p className="text-xs text-muted-foreground mb-1">
+                      Chip ID
+                    </p>
+                    <p className="text-sm font-medium font-mono text-foreground">
+                      {pet.microchipId}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Temperament */}
+              {pet.temperament.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-xs text-muted-foreground mb-2">
                     Temperament
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {pet.temperament.map((trait, index) => (
+                    {pet.temperament.map((trait, i) => (
                       <Badge
-                        key={index}
+                        key={i}
                         className="bg-primary/10 text-primary border-0"
                       >
                         {trait}
@@ -659,323 +670,287 @@ export function PetDetailPage({
                     ))}
                   </div>
                 </div>
+              )}
 
-                {pet.tags.length > 0 && (
-                  <>
-                    <Separator />
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-2 flex items-center gap-2">
-                        <Tag className="w-4 h-4" />
-                        Tags
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {pet.tags.map((tag, index) => (
-                          <Badge
-                            key={index}
-                            variant="outline"
-                            className="border-secondary/30 text-foreground"
-                          >
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
+              {/* Tags */}
+              {pet.tags.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                    <Tag className="w-3 h-3" /> Tags
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {pet.tags.map((tag, i) => (
+                      <Badge
+                        key={i}
+                        variant="outline"
+                        className="border-border/50 text-foreground"
+                      >
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Lost Pet Info */}
+            {pet.status === "lost" && (
+              <>
+                <Separator className="my-6" />
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold flex items-center gap-2 text-destructive">
+                    <AlertCircle className="w-5 h-5" /> Lost Pet Information
+                  </h3>
+                  {pet.dateLost && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">
+                        Date Lost
+                      </span>
+                      <span className="text-sm font-medium text-foreground">
+                        {pet.dateLost}
+                      </span>
                     </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
+                  )}
+                  {pet.lastSeenLocation && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">
+                        Last Seen Location
+                      </p>
+                      <p className="text-sm font-medium text-foreground">
+                        {pet.lastSeenLocation}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
 
-            {/* Adoption/Sale/Lost Specific Info */}
+            {/* Adoption Info */}
             {pet.status === "adoption" && pet.adoptionStatus && (
-              <Card className="rounded-3xl border-0 shadow-lg bg-gradient-to-r from-green-50 to-blue-50">
-                <CardHeader>
-                  <CardTitle className="text-foreground">
+              <>
+                <Separator className="my-6" />
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold">
                     Adoption Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
+                  </h3>
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Status</span>
-                    <Badge className="bg-green-600 text-white border-0">
+                    <span className="text-sm text-muted-foreground">
+                      Status
+                    </span>
+                    <Badge className="bg-green-50 text-green-700 border border-green-200 text-sm font-semibold px-3 py-1.5">
                       {pet.adoptionStatus}
                     </Badge>
                   </div>
                   {pet.adoptionSource && (
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">
+                      <span className="text-sm text-muted-foreground">
                         Rescue Center
                       </span>
-                      <span className="text-foreground">
+                      <span className="text-sm font-medium text-foreground">
                         {pet.adoptionSource}
                       </span>
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </>
             )}
 
-            {pet.status === "sale" && pet.price && (
-              <Card className="rounded-3xl border-0 shadow-lg bg-gradient-to-r from-secondary/10 to-secondary/5">
-                <CardHeader>
-                  <CardTitle className="text-foreground">
-                    Sale Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground text-lg">Price</span>
-                    <span className="text-secondary text-3xl">
-                      ${pet.price.toFixed(2)}
+            {/* Owner Info */}
+            <Separator className="my-6" />
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold">Owner Information</h3>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full overflow-hidden bg-muted flex-shrink-0 border border-border">
+                  <img
+                    src={pet.owner.image}
+                    alt={pet.owner.owner_first_name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "/fallback.jpg";
+                    }}
+                  />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-foreground">
+                      {pet.owner.owner_first_name} {pet.owner.owner_last_name}
                     </span>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {pet.status === "lost" && (
-              <Card className="rounded-3xl border-0 shadow-lg bg-gradient-to-r from-destructive/10 to-orange-50">
-                <CardHeader>
-                  <CardTitle className="text-foreground flex items-center gap-2">
-                    <AlertCircle className="w-5 h-5 text-destructive" />
-                    Lost Pet Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {pet.dateLost && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Date Lost</span>
-                      <span className="text-foreground">{pet.dateLost}</span>
-                    </div>
-                  )}
-                  {pet.lastSeenLocation && (
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">
-                        Last Seen Location
-                      </p>
-                      <p className="text-foreground">{pet.lastSeenLocation}</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Location */}
-            <Card className="rounded-3xl border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-foreground flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-primary" />
-                  Location
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Address</p>
-                  <p className="text-foreground">{pet.location.address}</p>
-                  <p className="text-muted-foreground text-sm mt-1">
-                    {pet.location.country}
-                  </p>
-                </div>
-
-                {/* Map Preview */}
-                <div className="aspect-video rounded-2xl overflow-hidden bg-muted border-2 border-primary/20">
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/10">
-                    <div className="text-center">
-                      <MapPin className="w-12 h-12 text-primary mx-auto mb-2" />
-                      <p className="text-foreground">
-                        {pet.location.latitude.toFixed(4)},{" "}
-                        {pet.location.longitude.toFixed(4)}
-                      </p>
-                      <Button
-                        variant="link"
-                        className="text-primary hover:text-primary/80 mt-2"
-                      >
-                        View on Map
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Owner Information */}
-            <Card className="rounded-3xl border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-foreground flex items-center gap-2">
-                  <UserIcon className="w-5 h-5 text-primary" />
-                  Owner Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-full overflow-hidden bg-muted flex-shrink-0">
-                    <ImageWithFallback
-                      src={pet.owner.image}
-                      alt={pet.owner.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-foreground">{pet.owner.name}</h3>
-                      {pet.owner.verified && (
-                        <ShieldCheck className="w-5 h-5 text-primary" />
-                      )}
-                    </div>
-                    {pet.owner.rating && (
-                      <div className="flex items-center gap-1">
-                        <Star className="w-4 h-4 fill-secondary text-secondary" />
-                        <span className="text-foreground">
-                          {pet.owner.rating.toFixed(1)}
-                        </span>
-                        <span className="text-muted-foreground text-sm">
-                          / 5.0
-                        </span>
-                      </div>
+                    
+                    {pet.owner.verified && (
+                      <ShieldCheck className="w-4 h-4 text-primary" />
                     )}
                   </div>
+                  {pet.owner.rating && (
+                    <div className="flex items-center gap-1">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          size={14}
+                          fill={
+                            i < Math.floor(pet.owner.rating!)
+                              ? "#fbbf24"
+                              : "transparent"
+                          }
+                          stroke={
+                            i < Math.floor(pet.owner.rating!)
+                              ? "#fbbf24"
+                              : "#d1d5db"
+                          }
+                        />
+                      ))}
+                      <span className="text-sm text-muted-foreground ml-1">
+                        {pet.owner.rating.toFixed(1)}
+                      </span>
+                      
+                    </div>
+                  )}
+                  <span className=" text-foreground" >
+                      {pet.owner.email}
+                    </span>
                 </div>
+              </div>
+            </div>
 
-                <div className="grid grid-cols-2 gap-3 mt-4">
-                  <Button
-                    variant="outline"
-                    className="rounded-xl border-primary/30 hover:border-primary hover:bg-primary/5"
-                  >
-                    <Phone className="w-4 h-4 mr-2" />
-                    Call
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="rounded-xl border-primary/30 hover:border-primary hover:bg-primary/5"
-                  >
-                    <Mail className="w-4 h-4 mr-2" />
-                    Email
-                  </Button>
+            {/* CTA Buttons */}
+            <div className="mt-8 flex flex-col sm:flex-row gap-3">
+              {getCTAButton()}
+              <Button
+                size="lg"
+                variant="outline"
+                className="flex-1 h-12 text-base font-semibold border-2 gap-2"
+                onClick={handleShare}
+              >
+                <Share2 className="w-5 h-5" /> Share
+              </Button>
+            </div>
+
+            {/* Contact Buttons */}
+            <div className="mt-5 flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1 rounded-lg border-primary/30 hover:border-primary hover:bg-primary/5 gap-2"
+              >
+                <Phone className="w-4 h-4" /> Call
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1 rounded-lg border-primary/30 hover:border-primary hover:bg-primary/5 gap-2"
+              >
+                <Mail className="w-4 h-4" /> Email
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1 rounded-lg border-primary/30 hover:border-primary hover:bg-primary/5 gap-2"
+              >
+                <MessageCircle className="w-4 h-4" /> Chat
+              </Button>
+            </div>
+
+            {/* Trust Badges Card */}
+            <Card className="mt-6 bg-muted/50 border-border/50 space-y-6">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between flex-row gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <Shield className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold">Verified Listing</p>
+                      <p className="text-xs text-muted-foreground">100% Safe</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <ShieldCheck className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold">Health Checked</p>
+                      <p className="text-xs text-muted-foreground">
+                        Vet Approved
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <Heart className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold">Loved & Cared</p>
+                      <p className="text-xs text-muted-foreground">Happy Pet</p>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
-
-            {/* CTA Button */}
-            <div className="sticky bottom-4 z-10">{getCTAButton()}</div>
           </div>
         </div>
 
-        {/* Related Products */}
-        <div className="mt-16">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-foreground">Products for {pet.name}</h2>
-            <Button
-              variant="ghost"
-              className="text-primary hover:text-primary/80"
-            >
-              View All
-              <ChevronRight className="w-4 h-4 ml-2" />
-            </Button>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {relatedProducts.map((product) => (
-              <Card
-                key={product.id}
-                className="group overflow-hidden rounded-2xl border-0 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer"
-              >
-                <div className="relative aspect-square bg-muted">
-                  <ImageWithFallback
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
+        {/* Location Section */}
+{/* Location Section */}
+<div className="mt-16">
+  <h2 className="text-2xl font-bold mb-6">Location</h2>
+
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+    {/* LEFT COLUMN */}
+    <div className="flex flex-col gap-4">
+
+      {/* MAP */}
+      <Card className="border-border/50 overflow-hidden rounded-xl shadow-md">
+        <div className="w-full h-[600px] ">
+          {pet.location.latitude && pet.location.longitude ? (
+            <iframe
+              src={getMapEmbedUrl()}
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              className="w-full h-full"
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full text-muted-foreground">
+              Location not available
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {/* LOCATION DETAILS BELOW MAP */}
+      {pet.location.latitude && pet.location.longitude && (
+        <Card className="border-border/50">
+          <CardContent className="p-6">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg mt-0.5">
+                <MapPin className="h-5 w-5 text-primary" />
+              </div>
+
+              <div>
+                <p className="font-semibold text-foreground">
+                  {pet.location.address}
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {pet.location.country}
+                </p>
+
+                <div className="mt-3 text-xs text-muted-foreground">
+                  Lat: {pet.location.latitude || "N/A"} <br />
+                  Lng: {pet.location.longitude || "N/A"}
                 </div>
-                <CardContent className="p-4 space-y-2">
-                  <h3 className="text-sm text-foreground line-clamp-2 min-h-[2.5rem]">
-                    {product.name}
-                  </h3>
-                  <p className="text-secondary">${product.price.toFixed(2)}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-        {/* Similar Pets */}
-        <div className="mt-16">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-foreground">Similar Pets</h2>
-            <Button
-              variant="ghost"
-              className="text-primary hover:text-primary/80"
-            >
-              View All
-              <ChevronRight className="w-4 h-4 ml-2" />
-            </Button>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            {similarPets.map((similarPet) => (
-              <Card
-                key={similarPet.id}
-                className="group overflow-hidden rounded-3xl border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer"
-              >
-                <div className="relative aspect-square bg-muted">
-                  <ImageWithFallback
-                    src={similarPet.image}
-                    alt={similarPet.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  <div className="absolute top-4 left-4">
-                    <Badge className="bg-green-500 text-white border-0">
-                      For Adoption
-                    </Badge>
-                  </div>
-                </div>
-                <CardContent className="p-6 space-y-2">
-                  <h3 className="text-foreground">{similarPet.name}</h3>
-                  <p className="text-muted-foreground">{similarPet.breed}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {similarPet.age}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
+    </div>
 
-        {/* Related Articles */}
-        <div className="mt-16">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-foreground">Helpful Articles</h2>
-            <Button
-              variant="ghost"
-              className="text-primary hover:text-primary/80"
-            >
-              View All
-              <ChevronRight className="w-4 h-4 ml-2" />
-            </Button>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            {relatedArticles.map((article) => (
-              <Card
-                key={article.id}
-                className="group overflow-hidden rounded-3xl border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer"
-              >
-                <div className="relative aspect-video bg-muted">
-                  <ImageWithFallback
-                    src={article.image}
-                    alt={article.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                </div>
-                <CardContent className="p-6 space-y-2">
-                  <h3 className="text-foreground line-clamp-2">
-                    {article.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    {article.readTime}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </main>
+    {/* RIGHT COLUMN (empty for now) */}
+    <div />
+
+  </div>
+</div>
+      </div>
     </div>
   );
 }

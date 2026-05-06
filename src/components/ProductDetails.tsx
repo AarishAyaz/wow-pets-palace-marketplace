@@ -18,6 +18,7 @@ import { Card, CardContent } from "./ui/card";
 import { Separator } from "./ui/separator";
 import { ProductCard } from "./ProductCard";
 import { useCart } from "@/context/CartContext";
+import { useCartEvents } from "./cartEvents";
 
 // Inject keyframes once
 const shineKeyframes = `
@@ -217,6 +218,7 @@ export function ProductDetailsPage() {
   const productReviews = reviews.filter(
     (review) => review.product_id === product.id,
   );
+
 
   const {addToCart} = useCart();
   return (
@@ -532,7 +534,9 @@ export function ProductDetailsPage() {
         shop_id: product.shop_id,
         shopName: product.shopName,
       })
+      
     }
+    
                 size="lg"
                 className="flex-1 gap-2 h-12 text-base font-semibold"
               >

@@ -29,8 +29,8 @@ import GoogleOneTap from "./components/GoogleOneTap";
 import { UserProfilePage } from "./components/ProfileN";
 import { Toaster } from "react-hot-toast";
 import CartCheckoutWrapper from "./components/CartCheckoutWrapper";
-import {loadStripe} from "@stripe/stripe-js";
-import {Elements} from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
 import { PetDetailPage } from "./components/PetDetails";
 
 function Home() {
@@ -67,42 +67,39 @@ function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
-
 export default function App() {
+  const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+
   return (
     <Router basename="/wowpets">
       <AuthProvider>
         <CartProvider>
-          <Elements stripe={stripePromise}>
-          <GoogleOneTap />
-          <Toaster position="top-right" />
-          <Layout>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/shop" element={<ProductsPage />} />
-              <Route path="/product/:slug" element={<ProductDetailsPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/signup" element={<SignupPage />} />
-              <Route path="/profile" element={
-                   <UserProfilePage />
-            
-              }/>
-              <Route
-                path="/cart"
-                element={ 
-                  <ProtectedRoute>
-                    <CartCheckoutWrapper />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="/pet/:slug"
-              element= {
-                <PetDetailPage/>
-              } />
-            </Routes>
-          </Layout>
-          </Elements>
+            <Elements stripe={stripePromise}>
+              <GoogleOneTap />
+              <Toaster position="top-right" />
+              <Layout>
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/shop" element={<ProductsPage />} />
+                  <Route
+                    path="/product/:slug"
+                    element={<ProductDetailsPage />}
+                  />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/signup" element={<SignupPage />} />
+                  <Route path="/profile" element={<UserProfilePage />} />
+                  <Route
+                    path="/cart"
+                    element={
+                      <ProtectedRoute>
+                        <CartCheckoutWrapper />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route path="/pet/:slug" element={<PetDetailPage />} />
+                </Routes>
+              </Layout>
+            </Elements>
         </CartProvider>
       </AuthProvider>
     </Router>

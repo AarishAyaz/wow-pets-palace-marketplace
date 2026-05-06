@@ -19,6 +19,8 @@ interface CartContextType {
   clearCart: () => void;
   getTotalItems: () => number;
   getTotalPrice: () => number;
+  cartPulse: boolean;
+  lastAddedItem: CartItem | null;
 }
 
 const CartContext = createContext<CartContextType | null>(null);
@@ -34,6 +36,10 @@ const [cart, setCart] = useState<CartItem[]>(() => {
   const stored = localStorage.getItem("cart");
   return stored ? JSON.parse(stored) : [];
 });
+
+const [cartPulse, setCartPulse] = useState(false);
+const [lastAddedItem, setLastAddedItem] = useState<CartItem | null>(null);
+
   // Load from localStorage
   useEffect(() => {
     const stored = localStorage.getItem("cart");
@@ -59,6 +65,10 @@ const addToCart = (item: CartItem) => {
 
     return [...prev, item]; // ✅ keep original quantity
   });
+
+  setLastAddedItem(item);
+  setCartPulse(true);
+  setTimeout(() => setCartPulse(false), 600);
 };
 
   const removeFromCart = (id: string | number) => {
@@ -91,6 +101,8 @@ const addToCart = (item: CartItem) => {
         clearCart,
         getTotalItems,
         getTotalPrice,
+        cartPulse,
+        lastAddedItem,
       }}
     >
       {children}
