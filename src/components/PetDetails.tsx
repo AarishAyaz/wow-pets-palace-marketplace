@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
+import { useRecommendations } from "@/hooks/useRecommendations";
 import { Badge } from "./ui/badge";
 import { Separator } from "./ui/separator";
 import { useEffect, useState } from "react";
@@ -52,6 +53,11 @@ if (typeof document !== "undefined") {
   }
 }
 
+interface Tag {
+  id: number;
+  name: string;
+}
+
 interface Pet {
   id: string;
   name: string;
@@ -69,7 +75,7 @@ interface Pet {
   microchipped: boolean;
   microchipId?: string;
   neutered: boolean;
-  tags: string[];
+  tags: Tag[];
   price?: number;
   adoptionStatus?: string;
   adoptionDate?: string;
@@ -121,37 +127,98 @@ export function PetDetailPage() {
             ) || [];
 
           const formattedPet: Pet = {
-            id: apiPet.pet_id?.toString() || "",
-            name: apiPet.pet_name || "Unknown",
-            status: apiPet.type || "adoption",
-            images,
-            breed: apiPet.breed || "Unknown",
-            category: apiPet.type || "Pet",
-            gender: "Male",
-            size: "Medium",
-            activityLevel: "Medium",
-            description: apiPet.description || "No description available",
-            dateOfBirth:  apiPet.dateofbirth || "2023-01-01",
-            color: "Unknown",
-            temperament: [],
-            microchipped: false,
-            neutered: false,
-            tags: [],
-            price: apiPet.price || 0,
-            location: {
-              country: "Pakistan",
-              address: apiPet.address || "Unknown location",
-              latitude: apiPet.latitude || 0,
-              longitude: apiPet.longitude || 0,
-            },
-            owner: {
-              owner_first_name: apiPet.owner_first_name,
-              owner_last_name: apiPet.owner_last_name,
-              image: apiPet.owner_profile_photo,
-              email: apiPet.owner_email,
-              phone: apiPet.owner_phone,
-            },
-          };
+  id: apiPet.pet_id?.toString() || "",
+
+  name: apiPet.pet_name || "Unknown",
+
+  status: apiPet.type || "adoption",
+
+  images:
+    apiPet.images?.map(
+      (img: any) =>
+        `https://wowpetspalace.com/test/${img.image_url}`
+    ) || [],
+
+  breed: apiPet.breed || "Unknown",
+
+  category: apiPet.category || "Pet",
+
+  gender:
+    apiPet.gender === "male"
+      ? "Male"
+      : "Female",
+
+  size:
+    apiPet.size_category
+      ? apiPet.size_category.charAt(0).toUpperCase() +
+        apiPet.size_category.slice(1)
+      : "Medium",
+
+  activityLevel:
+    apiPet.activity_level
+      ? apiPet.activity_level.charAt(0).toUpperCase() +
+        apiPet.activity_level.slice(1)
+      : "Medium",
+
+  description:
+    apiPet.description || "No description available",
+
+  dateOfBirth:
+    apiPet.date_of_birth || "2023-01-01",
+
+  color: apiPet.color || "Unknown",
+
+  temperament:
+    apiPet.temperament
+      ? [apiPet.temperament]
+      : [],
+
+  microchipped:
+    Boolean(apiPet.microchipped),
+
+  microchipId:
+    apiPet.microchip_id || undefined,
+
+  neutered:
+    Boolean(apiPet.neutered),
+
+  tags:
+    apiPet.tags?.map((tag: any) => ({
+      id: tag.id,
+      name: tag.name,
+    })) || [],
+
+  price: apiPet.price || 0,
+
+  location: {
+    country: apiPet.country || "Pakistan",
+
+    address:
+      apiPet.address || "Unknown location",
+
+    latitude:
+      apiPet.latitude || 0,
+
+    longitude:
+      apiPet.longitude || 0,
+  },
+
+  owner: {
+    owner_first_name:
+      apiPet.owner_first_name,
+
+    owner_last_name:
+      apiPet.owner_last_name,
+
+    image: apiPet.owner_profile_photo
+      ? `https://wowpetspalace.com/test/${apiPet.owner_profile_photo}`
+      : "/fallback.jpg",
+
+    email: apiPet.owner_email,
+
+    phone: apiPet.owner_phone,
+  },
+};
 
           setPet(formattedPet);
           if (images.length > 0) setSelectedImage(images[0]);
@@ -194,15 +261,15 @@ export function PetDetailPage() {
     }
   };
 
-const getMapEmbedUrl = () => {
-  if (!pet) return "";
+  const getMapEmbedUrl = () => {
+    if (!pet) return "";
 
-  const { latitude, longitude } = pet.location;
+    const { latitude, longitude } = pet.location;
 
-  if (!latitude || !longitude) return "";
+    if (!latitude || !longitude) return "";
 
-  return `https://www.google.com/maps?q=${latitude},${longitude}&z=15&output=embed`;
-};
+    return `https://www.google.com/maps?q=${latitude},${longitude}&z=15&output=embed`;
+  };
 
   const calculateAge = (dob: string) => {
     const birthDate = new Date(dob);
@@ -216,7 +283,18 @@ const getMapEmbedUrl = () => {
     if (years > 0) return `${years} yr${years !== 1 ? "s" : ""} ${months} mo`;
     return `${months} month${months !== 1 ? "s" : ""}`;
   };
+  const { data, loading } = useRecommendations({
+    tag_ids: pet?.tags?.map((t) => t.id) || [],
+    is_product: true,
+    is_article: true,
+    is_breed: true,
+    is_pets: true,
+    limit: 2,
+  });
 
+  const pets = data?.pets || [];
+  const products = data?.products || [];
+  const articles = data?.articles || [];
   if (isLoading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
@@ -685,7 +763,7 @@ const getMapEmbedUrl = () => {
                         variant="outline"
                         className="border-border/50 text-foreground"
                       >
-                        {tag}
+                        {tag.name}
                       </Badge>
                     ))}
                   </div>
@@ -775,7 +853,7 @@ const getMapEmbedUrl = () => {
                     <span className="font-semibold text-foreground">
                       {pet.owner.owner_first_name} {pet.owner.owner_last_name}
                     </span>
-                    
+
                     {pet.owner.verified && (
                       <ShieldCheck className="w-4 h-4 text-primary" />
                     )}
@@ -801,12 +879,9 @@ const getMapEmbedUrl = () => {
                       <span className="text-sm text-muted-foreground ml-1">
                         {pet.owner.rating.toFixed(1)}
                       </span>
-                      
                     </div>
                   )}
-                  <span className=" text-foreground" >
-                      {pet.owner.email}
-                    </span>
+                  <span className=" text-foreground">{pet.owner.email}</span>
                 </div>
               </div>
             </div>
@@ -886,70 +961,216 @@ const getMapEmbedUrl = () => {
         </div>
 
         {/* Location Section */}
-{/* Location Section */}
-<div className="mt-16">
-  <h2 className="text-2xl font-bold mb-6">Location</h2>
+        {/* Location Section */}
+        <div className="mt-16">
+          <h2 className="text-2xl font-bold mb-6">Location</h2>
 
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-    {/* LEFT COLUMN */}
-    <div className="flex flex-col gap-4">
-
-      {/* MAP */}
-      <Card className="border-border/50 overflow-hidden rounded-xl shadow-md">
-        <div className="w-full h-[600px] ">
-          {pet.location.latitude && pet.location.longitude ? (
-            <iframe
-              src={getMapEmbedUrl()}
-              width="100%"
-              height="100%"
-              style={{ border: 0 }}
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              className="w-full h-full"
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-              Location not available
-            </div>
-          )}
-        </div>
-      </Card>
-
-      {/* LOCATION DETAILS BELOW MAP */}
-      {pet.location.latitude && pet.location.longitude && (
-        <Card className="border-border/50">
-          <CardContent className="p-6">
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg mt-0.5">
-                <MapPin className="h-5 w-5 text-primary" />
-              </div>
-
-              <div>
-                <p className="font-semibold text-foreground">
-                  {pet.location.address}
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {pet.location.country}
-                </p>
-
-                <div className="mt-3 text-xs text-muted-foreground">
-                  Lat: {pet.location.latitude || "N/A"} <br />
-                  Lng: {pet.location.longitude || "N/A"}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* LEFT COLUMN */}
+            <div className="flex flex-col gap-4 ">
+              {/* MAP */}
+              <Card className="border-border/50 overflow-hidden rounded-xl shadow-md">
+                <div className="w-full h-96 ">
+                  {pet.location.latitude && pet.location.longitude ? (
+                    <iframe
+                      src={getMapEmbedUrl()}
+                      width="100%"
+                      height="100%"
+                      style={{ border: 0 }}
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      className="w-full h-full"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                      Location not available
+                    </div>
+                  )}
                 </div>
-              </div>
+              </Card>
+
+              {/* LOCATION DETAILS BELOW MAP */}
+              {pet.location.latitude && pet.location.longitude && (
+                <Card className="border-border/50">
+                  <CardContent className="p-6">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg mt-0.5">
+                        <MapPin className="h-5 w-5 text-primary" />
+                      </div>
+
+                      <div>
+                        <p className="font-semibold text-foreground">
+                          {pet.location.address}
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {pet.location.country}
+                        </p>
+
+                        <div className="mt-3 text-xs text-muted-foreground">
+                          Lat: {pet.location.latitude || "N/A"} <br />
+                          Lng: {pet.location.longitude || "N/A"}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
+
+            {/* RIGHT COLUMN (empty for now) */}
+            {/* Recommendations Section */}
+            <div className="mt-20 space-y-14">
+              {/* Related Pets */}
+              {pets?.length > 0 && (
+                <section>
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-bold">Related Pets</h2>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+                    {pets.map((item: any) => (
+                      <Card
+                        key={item.pet_id}
+                        className="overflow-hidden hover:shadow-xl transition-all duration-300 group"
+                      >
+                        <div className="aspect-square overflow-hidden bg-muted">
+                          <img
+                            src={item.image}
+                            alt={item.pet_name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        </div>
+
+                        <CardContent className="p-4">
+                          <h3 className="font-semibold line-clamp-1">
+                            {item.pet_name}
+                          </h3>
+
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {item.breed}
+                          </p>
+
+                          <Button className="w-full mt-4" variant="outline">
+                            View Details
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* Related Products */}
+              {products?.length > 0 && (
+                <section>
+                  <h2 className="text-2xl font-bold mb-6">
+                    Recommended Products
+                  </h2>
+
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
+                    {products.map((product: any) => (
+                      <Card
+                        key={product.product_id}
+                        className="overflow-hidden hover:shadow-xl transition-all duration-300"
+                      >
+                        <div className="aspect-square bg-muted overflow-hidden">
+                          <img
+                            src={product.image}
+                            alt={product.product_name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+
+                        <CardContent className="p-4">
+                          <h3 className="font-medium line-clamp-2 min-h-[48px]">
+                            {product.product_name}
+                          </h3>
+
+                          <p className="text-primary font-bold mt-2">
+                            ${product.price}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* Related Articles */}
+              {articles?.length > 0 && (
+                <section>
+                  <h2 className="text-2xl font-bold mb-6">Helpful Articles</h2>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {articles.map((article: any) => (
+                      <Card
+                        key={article.article_id}
+                        className="overflow-hidden hover:shadow-lg transition-all"
+                      >
+                        <div className="aspect-video overflow-hidden bg-muted">
+                          <img
+                            src={article.image}
+                            alt={article.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+
+                        <CardContent className="p-5">
+                          <h3 className="font-semibold text-lg line-clamp-2">
+                            {article.title}
+                          </h3>
+
+                          <p className="text-sm text-muted-foreground mt-3 line-clamp-3">
+                            {article.short_description}
+                          </p>
+
+                          <Button variant="link" className="px-0 mt-3">
+                            Read More
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </section>
+              )}
+              {/* Related Breeds */}
+{data?.breeds?.length > 0 && (
+  <section>
+    <h2 className="text-2xl font-bold mb-6">
+      Related Breeds
+    </h2>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      {data.breeds.map((breed: any) => (
+        <Card
+          key={breed.id}
+          className="overflow-hidden hover:shadow-lg transition-all"
+        >
+          <CardContent className="p-5">
+            <h3 className="font-semibold text-lg">
+              {breed.title}
+            </h3>
+
+            <p className="text-sm text-muted-foreground mt-3 line-clamp-3">
+              {breed.shortDescription}
+            </p>
+
+            <Button
+              variant="link"
+              className="px-0 mt-3"
+            >
+              Explore Breed
+            </Button>
           </CardContent>
         </Card>
-      )}
-
+      ))}
     </div>
-
-    {/* RIGHT COLUMN (empty for now) */}
-    <div />
-
-  </div>
-</div>
+  </section>
+)}
+            </div>
+            <div />
+          </div>
+        </div>
       </div>
     </div>
   );
