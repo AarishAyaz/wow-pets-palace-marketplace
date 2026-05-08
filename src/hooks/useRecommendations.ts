@@ -19,6 +19,9 @@ interface RecommendationProduct {
 interface RecommendationPet {
   pet_id: number;
   pet_name: string;
+  image: string;
+  breed: string;
+  description: string;
   slug: string;
   tags: RecommendationTag[];
 }
@@ -56,27 +59,32 @@ export const useRecommendations = (payload: RecommendationPayload) => {
 
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!payload.tag_ids.length) return;
+ useEffect(() => {
+  if (!payload?.tag_ids?.length) return;
 
-    const fetchRecommendations = async () => {
-      try {
-        setLoading(true);
+  const fetchRecommendations = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        const response =
-          await recommendationService.getRecommendations(payload);
+      console.log("Calling recommendations API...", payload);
 
-        setData(response?.data || response);
+      const response =
+        await recommendationService.getRecommendations(payload);
 
-      } catch (err) {
-        setError("Failed to fetch recommendations");
-      } finally {
-        setLoading(false);
-      }
-    };
+      console.log("Recommendations response:", response);
 
-    fetchRecommendations();
-  }, [JSON.stringify(payload)]);
+      setData(response?.data || response);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to fetch recommendations");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchRecommendations();
+}, [payload]);
 
   return {
     data,

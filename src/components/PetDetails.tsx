@@ -14,12 +14,12 @@ import {
   Tag,
   DollarSign,
   AlertCircle,
-  User as UserIcon,
+  ArrowRight,
   Navigation,
   Mail,
-  Truck,
+  User,
   Shield,
-  RefreshCw,
+  Clock,
   Info,
   Calendar,
   ChevronLeft,
@@ -30,8 +30,10 @@ import { Card, CardContent } from "./ui/card";
 import { useRecommendations } from "@/hooks/useRecommendations";
 import { Badge } from "./ui/badge";
 import { Separator } from "./ui/separator";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
+import { ProductCard } from "./ProductCard";
+import { useNavigate } from "react-router-dom";
 
 // Inject keyframes once (same as ProductDetailsPage)
 const shineKeyframes = `
@@ -108,6 +110,7 @@ export function PetDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchPet = async () => {
@@ -283,18 +286,27 @@ export function PetDetailPage() {
     if (years > 0) return `${years} yr${years !== 1 ? "s" : ""} ${months} mo`;
     return `${months} month${months !== 1 ? "s" : ""}`;
   };
-  const { data, loading } = useRecommendations({
-    tag_ids: pet?.tags?.map((t) => t.id) || [],
+
+const recommendationPayload = useMemo(
+  ()=>({
+    tag_ids: pet?.tags?.map((t)=> t.id) || [],
     is_product: true,
     is_article: true,
     is_breed: true,
     is_pets: true,
     limit: 2,
-  });
+  }),[pet]
+)
+console.log("Pet tags:", pet?.tags);
+
+  const { data, loading } = useRecommendations(
+   recommendationPayload
+  );
 
   const pets = data?.pets || [];
   const products = data?.products || [];
   const articles = data?.articles || [];
+  const breeds = data?.breeds || [];
   if (isLoading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
@@ -961,13 +973,12 @@ export function PetDetailPage() {
         </div>
 
         {/* Location Section */}
-        {/* Location Section */}
         <div className="mt-16">
-          <h2 className="text-2xl font-bold mb-6">Location</h2>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 items-start gap-6">
             {/* LEFT COLUMN */}
-            <div className="flex flex-col gap-4 ">
+            <div className="flex flex-col gap-4 h-full item-stretch ">
+                        <h2 className="text-2xl font-bold">Location</h2>
+
               {/* MAP */}
               <Card className="border-border/50 overflow-hidden rounded-xl shadow-md">
                 <div className="w-full h-96 ">
@@ -1019,159 +1030,403 @@ export function PetDetailPage() {
 
             {/* RIGHT COLUMN (empty for now) */}
             {/* Recommendations Section */}
-            <div className="mt-20 space-y-14">
-              {/* Related Pets */}
-              {pets?.length > 0 && (
-                <section>
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-bold">Related Pets</h2>
-                  </div>
+            {/* RIGHT COLUMN - Related Products */}
+{products?.length > 0 && (
+  <div className="flex flex-col gap-4 h-full">
+    <div className="flex items-center justify-between">
+      <h2 className="text-2xl font-bold">Recommended Products</h2>
+      <span className="text-sm text-muted-foreground">
+        {products.length} item{products.length !== 1 ? "s" : ""}
+      </span>
+    </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
-                    {pets.map((item: any) => (
-                      <Card
-                        key={item.pet_id}
-                        className="overflow-hidden hover:shadow-xl transition-all duration-300 group"
-                      >
-                        <div className="aspect-square overflow-hidden bg-muted">
-                          <img
-                            src={item.image}
-                            alt={item.pet_name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        </div>
+    {/* Scroll area matching map height (h-96 = 384px) + location card (~100px) + gap (16px) = ~500px */}
+    <div
+      className="flex-1 min-h-0 overflow-y-auto pr-1 h-[530px] "
+      style={{
+        // maxHeight: "500px",
+        scrollbarWidth: "thin",
+        scrollbarColor: "hsl(var(--border)) transparent",
+      }}
+    >
+      <div className="grid grid-cols-2 gap-3">
+        {products.map((product: any) => (
+          <div key={product.id} className="h-[260px] flex flex-col"
+>
+<ProductCard
+            id={product.id}
+            slug={product.slug}
+            name={product.name}
+            image={
+              product.featured_image
+                ? `https://wowpetspalace.com/test/${product.featured_image}`
+                : "/fallback.jpg"
+            }
+            price={product.original_price ?? 0}
+            originalPrice={
+              product.unit_price ?? undefined
+            }
+            discountPercentage={
+              product.is_discount ?? 0
+            }
+            rating={product.overall_rating ?? 0}
+            reviewsCount={null}
+            category={product.tags?.[0]?.name}
+            shipping_cost={product.shipping_cost ?? 0}
+            shop_id={product.shop_id}
+            shopName={product.shop_name ?? ""}
+          />
+          </div>
+          
+        ))}
+      </div>
+    </div>
+  </div>
+)}
 
-                        <CardContent className="p-4">
-                          <h3 className="font-semibold line-clamp-1">
-                            {item.pet_name}
-                          </h3>
+{/* Fallback if no products */}
+{(!products || products.length === 0) && <div />}
+            <div />
+          </div>
+        </div>
+        {/* Related Pets Section - Below Location */}
+{pets?.length > 0 && (
+  <div className="mt-12">
+    <div className="flex items-center justify-between mb-6">
+      <h2 className="text-2xl font-bold">Related Pets</h2>
+      <span className="text-sm text-muted-foreground">
+        {pets.length} pet{pets.length !== 1 ? "s" : ""}
+      </span>
+    </div>
 
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {item.breed}
-                          </p>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {pets.map((item: any) => {
+        const normalize = (str: string) =>
+          str?.toLowerCase().replace(/\s+/g, "").trim();
 
-                          <Button className="w-full mt-4" variant="outline">
-                            View Details
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </section>
-              )}
+        const getStatusConfig = (type: string, price: number) => {
+          const t = normalize(type);
+          switch (t) {
+            case "adoption":
+              return {
+                label: "Adopt Me",
+                buttonColor: "bg-yellow-500 hover:bg-yellow-600 text-white",
+                badgeColor: "bg-yellow-500 text-white",
+              };
+            case "sale":
+              return {
+                label: `$${price}`,
+                buttonColor: "bg-green-500 hover:bg-green-600 text-white",
+                badgeColor: "bg-green-500 text-white",
+              };
+            case "lost":
+              return {
+                label: "Lost",
+                buttonColor: "bg-red-600 hover:bg-red-700 text-white",
+                badgeColor: "bg-red-600 text-white",
+              };
+            default:
+              return {
+                label: type,
+                buttonColor: "bg-gray-500 text-white",
+                badgeColor: "bg-gray-500 text-white",
+              };
+          }
+        };
 
-              {/* Related Products */}
-              {products?.length > 0 && (
-                <section>
-                  <h2 className="text-2xl font-bold mb-6">
-                    Recommended Products
-                  </h2>
+        const statusConfig = getStatusConfig(
+          item.type || item.current_status || "adoption",
+          item.price ?? 0
+        );
 
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
-                    {products.map((product: any) => (
-                      <Card
-                        key={product.product_id}
-                        className="overflow-hidden hover:shadow-xl transition-all duration-300"
-                      >
-                        <div className="aspect-square bg-muted overflow-hidden">
-                          <img
-                            src={product.image}
-                            alt={product.product_name}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
+        const petImage = item.image
+          ? item.image
+          : item.images?.length
+          ? `https://wowpetspalace.com/test/${item.images[0].image_url}`
+          : "/fallback.jpg";
 
-                        <CardContent className="p-4">
-                          <h3 className="font-medium line-clamp-2 min-h-[48px]">
-                            {product.product_name}
-                          </h3>
+        return (
+          <Card
+            key={item.pet_id}
+            className="group cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl border-0 overflow-hidden"
+            onClick={() => navigate(`/pet/${item.slug}`)}
+          >
+            <div className="relative">
+              <img
+                src={petImage}
+                alt={item.pet_name}
+                loading="lazy"
+                className="w-full h-48 object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = "/fallback.jpg";
+                }}
+              />
+              <Badge
+                className={`absolute top-3 right-3 border-0 ${statusConfig.badgeColor}`}
+              >
+                {(item.type || item.current_status || "adoption").toUpperCase()}
+              </Badge>
+            </div>
 
-                          <p className="text-primary font-bold mt-2">
-                            ${product.price}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </section>
-              )}
+            <CardContent className="p-6">
+              <h3 className="font-semibold text-lg mb-2 text-foreground">
+                {item.pet_name}
+              </h3>
 
-              {/* Related Articles */}
-              {articles?.length > 0 && (
-                <section>
-                  <h2 className="text-2xl font-bold mb-6">Helpful Articles</h2>
+              <p className="text-sm text-muted-foreground mb-2">
+                {item.breed || item.breed_id ||  "Unknown Breed"}
+              </p>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                    {articles.map((article: any) => (
-                      <Card
-                        key={article.article_id}
-                        className="overflow-hidden hover:shadow-lg transition-all"
-                      >
-                        <div className="aspect-video overflow-hidden bg-muted">
-                          <img
-                            src={article.image}
-                            alt={article.title}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
+              <p className="text-muted-foreground text-sm mb-3 line-clamp-2">
+                {item.description || "No description available."}
+              </p>
 
-                        <CardContent className="p-5">
-                          <h3 className="font-semibold text-lg line-clamp-2">
-                            {article.title}
-                          </h3>
+              <p className="text-xs text-muted-foreground mb-4 flex items-center gap-1">
+                <MapPin className="w-3 h-3 flex-shrink-0" />
+                {item.address || "Location not available"}
+              </p>
 
-                          <p className="text-sm text-muted-foreground mt-3 line-clamp-3">
-                            {article.short_description}
-                          </p>
+              <Button
+                className={`rounded-full px-6 ${statusConfig.buttonColor}`}
+                onClick={(e: any) => e.stopPropagation()}
+              >
+                {statusConfig.label}
+              </Button>
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
+  </div>
+)}
+{/* Related Breeds Section - Below Related Pets */}
+{breeds?.length > 0 && (
+  <div className="mt-12">
+    <div className="flex items-center justify-between mb-8">
+      <div className="space-y-2">
+        <h2 className="text-3xl font-bold text-foreground">
+          Related{" "}
+          <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            Breeds
+          </span>
+        </h2>
+        <p className="text-muted-foreground">
+          Learn about breeds related to {pet.name}
+        </p>
+      </div>
+       <span className="text-sm text-muted-foreground">
+        {breeds.length} breed{breeds.length !== 1 ? "s" : ""}
+      </span>
+    </div>
 
-                          <Button variant="link" className="px-0 mt-3">
-                            Read More
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </section>
-              )}
-              {/* Related Breeds */}
-{data?.breeds?.length > 0 && (
-  <section>
-    <h2 className="text-2xl font-bold mb-6">
-      Related Breeds
-    </h2>
-
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-      {data.breeds.map((breed: any) => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {breeds.map((breed: any) => (
         <Card
           key={breed.id}
-          className="overflow-hidden hover:shadow-lg transition-all"
+          className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105 border-0 bg-card overflow-hidden"
+          onClick={() => navigate(`/breeds/${breed.slug}`)}
         >
-          <CardContent className="p-5">
-            <h3 className="font-semibold text-lg">
-              {breed.title}
-            </h3>
+          <CardContent className="p-0">
+            {/* Image */}
+            <div className="relative overflow-hidden rounded-t-lg">
+              {breed.breed_images?.length > 0 ? (
+                <img
+                  src={`https://www.wowpetspalace.com/dashboard${breed.breed_images[0]}`}
+                  alt={breed.title || breed.breed_title}
+                  className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "/fallback.jpg";
+                  }}
+                />
+              ) : (
+                <div className="w-full h-48 bg-muted flex items-center justify-center">
+                  <span className="text-muted-foreground text-sm">
+                    No image available
+                  </span>
+                </div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            </div>
 
-            <p className="text-sm text-muted-foreground mt-3 line-clamp-3">
-              {breed.shortDescription}
-            </p>
+            {/* Content */}
+            <div className="p-6 space-y-3">
+              <h3 className="font-semibold text-lg text-foreground">
+                {breed.title || breed.breed_title}
+              </h3>
 
-            <Button
-              variant="link"
-              className="px-0 mt-3"
-            >
-              Explore Breed
-            </Button>
+              <div className="space-y-2">
+                {(breed.category_title || breed.categoryid) && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Category:</span>
+                    <span className="text-foreground font-medium">
+                      {breed.category_title || `Category ${breed.categoryid}`}
+                    </span>
+                  </div>
+                )}
+                {breed.lifespan && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Lifespan:</span>
+                    <span className="text-foreground font-medium">
+                      {breed.lifespan}
+                    </span>
+                  </div>
+                )}
+                {breed.weight && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Weight:</span>
+                    <span className="text-foreground font-medium">
+                      {breed.weight}
+                    </span>
+                  </div>
+                )}
+                {breed.shortDescription && (
+                  <p className="text-sm text-muted-foreground line-clamp-2 pt-1">
+                    {breed.shortDescription}
+                  </p>
+                )}
+              </div>
+
+              <Button
+                variant="ghost"
+                className="w-full text-primary hover:text-primary hover:bg-primary/10 group/btn"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Learn More
+                <ArrowRight className="w-4 h-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ))}
     </div>
-  </section>
+  </div>
 )}
-            </div>
-            <div />
-          </div>
-        </div>
+{/* Related Articles Section - Below Related Breeds */}
+{articles?.length > 0 && (
+  <div className="mt-12">
+    <div className="flex items-center justify-between mb-8">
+      <div className="space-y-2">
+        <h2 className="text-3xl font-bold text-foreground">
+          Helpful{" "}
+          <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            Articles
+          </span>
+        </h2>
+        <p className="text-muted-foreground">
+          Expert advice and tips related to {pet.name}
+        </p>
+      </div>
+       <span className="text-sm text-muted-foreground">
+        {articles.length} article{articles.length !== 1 ? "s" : ""}
+      </span>
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {articles.map((article: any) => {
+        const getCategoryColor = (category: string) => {
+          const colors: { [key: string]: string } = {
+            "Knowledge-Hub": "bg-green-100 text-green-800",
+            "Pet-Adoption-&-Rescue": "bg-blue-100 text-blue-800",
+            "Pet-Tips-and-Advice": "bg-purple-100 text-purple-800",
+            Dog: "bg-red-100 text-red-800",
+          };
+          return colors[category] || "bg-gray-100 text-gray-800";
+        };
+
+        const articleImage = article.image
+          ? article.image.startsWith("http")
+            ? article.image
+            : `https://www.wowpetspalace.com/dashboard/${article.image}`
+          : "/fallback.jpg";
+
+        const categoryName =
+          article.categoryName || article.category_name || "";
+
+        return (
+          <Card
+            key={article.id || article.article_id}
+            className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105 border-0 bg-card overflow-hidden"
+            onClick={() => navigate(`/articles/${article.slug}`)}
+          >
+            <CardContent className="p-0">
+              {/* Image */}
+              <div className="relative overflow-hidden rounded-t-lg">
+                <img
+                  src={articleImage}
+                  alt={article.title}
+                  className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "/fallback.jpg";
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                {categoryName && (
+                  <div className="absolute top-4 left-4">
+                    <Badge
+                      className={`${getCategoryColor(categoryName)} border-0`}
+                    >
+                      {categoryName}
+                    </Badge>
+                  </div>
+                )}
+              </div>
+
+              {/* Content */}
+              <div className="p-6 space-y-4">
+                <h3 className="font-semibold text-lg text-foreground leading-tight line-clamp-2">
+                  {article.title}
+                </h3>
+
+                {(article.short_description || article.description) && (
+                  <p
+                    className="text-muted-foreground text-sm leading-relaxed line-clamp-3"
+                    dangerouslySetInnerHTML={{
+                      __html:
+                        article.short_description || article.description || "",
+                    }}
+                  />
+                )}
+
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-1">
+                      <User className="w-3 h-3" />
+                      <span>WowPetsPalace</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Clock className="w-3 h-3" />
+                      <span>~5 min read</span>
+                    </div>
+                  </div>
+                  {article.time && (
+                    <span>
+                      {new Date(article.time).toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
+
+                <Button
+                  variant="ghost"
+                  className="w-full text-primary hover:text-primary hover:bg-primary/10 group/btn"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Read Article
+                  <ArrowRight className="w-4 h-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
+  </div>
+)}
       </div>
     </div>
   );
 }
+
+
+//add videos  
+//fix the product cards
+//pass listing_id with slug
