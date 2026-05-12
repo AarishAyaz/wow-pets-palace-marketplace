@@ -8,10 +8,10 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Item } from "@radix-ui/react-dropdown-menu";
 
-type PetImage ={
+type PetImage = {
   image_url: string;
-}
-type Pet={
+};
+type Pet = {
   listing_id: number;
   pet_id: number;
   slug: string;
@@ -98,8 +98,8 @@ export function ContentFeed() {
   // ];
   const navigate = useNavigate();
 
-const [pets, setPets] = useState<Pet[]>([]);
-const [loading, setLoading] = useState(true);
+  const [pets, setPets] = useState<Pet[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchPets = async () => {
@@ -122,47 +122,47 @@ const [loading, setLoading] = useState(true);
     fetchPets();
   }, []);
 
-  const getImage = (images:PetImage[]) => {
+  const getImage = (images: PetImage[]) => {
     if (!images?.length) return "/fallback.jpg";
     return `https://wowpetspalace.com/test/${images[0].image_url}`;
   };
-const normalize = (str: string) =>
-  str?.toLowerCase().replace(/\s+/g, "").trim();
+  const normalize = (str: string) =>
+    str?.toLowerCase().replace(/\s+/g, "").trim();
 
-const getStatusConfig = (type: string, price: number) => {
-  const t = normalize(type);
+  const getStatusConfig = (type: string, price: number) => {
+    const t = normalize(type);
 
-  switch (t) {
-    case "adoption":
-      return {
-        label: "Adopt Me",
-        buttonColor: "bg-yellow-500 hover:bg-yellow-600 text-white",
-        badgeColor: "bg-yellow-500 text-white",
-      };
+    switch (t) {
+      case "adoption":
+        return {
+          label: "Adopt Me",
+          buttonColor: "bg-yellow-500 hover:bg-yellow-600 text-white",
+          badgeColor: "bg-yellow-500 text-white",
+        };
 
-    case "sale":
-      return {
-        label: `$${price}`,
-        buttonColor: "bg-green-500 hover:bg-green-600 text-white",
-        badgeColor: "bg-green-500 text-white",
-      };
+      case "sale":
+        return {
+          label: `$${price}`,
+          buttonColor: "bg-green-500 hover:bg-green-600 text-white",
+          badgeColor: "bg-green-500 text-white",
+        };
 
-    case "lost":
-      return {
-        label: "Lost",
-        buttonColor: "bg-red-600 hover:bg-red-700 text-white",
-        badgeColor: "bg-red-600 text-white",
-      };
+      case "lost":
+        return {
+          label: "Lost",
+          buttonColor: "bg-red-600 hover:bg-red-700 text-white",
+          badgeColor: "bg-red-600 text-white",
+        };
 
-    default:
-      console.log("UNMATCHED TYPE:", type);
-      return {
-        label: type,
-        buttonColor: "bg-gray-500 text-white",
-        badgeColor: "bg-gray-500 text-white",
-      };
-  }
-};
+      default:
+        console.log("UNMATCHED TYPE:", type);
+        return {
+          label: type,
+          buttonColor: "bg-gray-500 text-white",
+          badgeColor: "bg-gray-500 text-white",
+        };
+    }
+  };
   return (
     <section className="py-12 px-4">
       <div className="container mx-auto">
@@ -171,16 +171,15 @@ const getStatusConfig = (type: string, price: number) => {
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {pets.map((item) => {
-            const statusConfig = getStatusConfig(
-              item.type,
-              item.price,
-            );
+            const statusConfig = getStatusConfig(item.type, item.price);
 
             return (
               <Card
                 key={item.listing_id}
                 className="group cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl border-0 overflow-hidden"
-                onClick={() => navigate(`/pet/${item.slug}`)}
+                onClick={() =>
+                  navigate(`/pet/${item.slug}?listing_id=${item.pet_id}`)
+                }
               >
                 <div className="relative">
                   <ImageWithFallback
@@ -189,9 +188,11 @@ const getStatusConfig = (type: string, price: number) => {
                     className="w-full h-48 object-cover"
                   />
 
-           <Badge className={`absolute top-3 right-3 border-0 ${statusConfig.badgeColor}`}>
-  {item.type.toUpperCase()}
-</Badge>
+                  <Badge
+                    className={`absolute top-3 right-3 border-0 ${statusConfig.badgeColor}`}
+                  >
+                    {item.type.toUpperCase()}
+                  </Badge>
                 </div>
 
                 <CardContent className="p-6">
@@ -211,7 +212,9 @@ const getStatusConfig = (type: string, price: number) => {
                     {item.address || "Location not available"}
                   </p>
 
-                  <Button className={`rounded-full px-6 ${statusConfig.buttonColor}`}>
+                  <Button
+                    className={`rounded-full px-6 ${statusConfig.buttonColor}`}
+                  >
                     {statusConfig.label}
                   </Button>
                 </CardContent>
@@ -222,15 +225,13 @@ const getStatusConfig = (type: string, price: number) => {
         <div className="text-center mt-10">
           <Button
             variant="outline"
-                        onClick={() => navigate("/pets")}
-
+            onClick={() => navigate("/pets")}
             size="lg"
             className="border-2 border-primary text-primary hover:bg-primary hover:text-white px-8 py-6 rounded-full transition-all duration-300 cursor-pointer"
           >
             View All Pets
             <ArrowRight className="w-5 h-5 ml-2" />
           </Button>
-          
         </div>
       </div>
     </section>

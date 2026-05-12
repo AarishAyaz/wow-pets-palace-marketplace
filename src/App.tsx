@@ -32,6 +32,8 @@ import CartCheckoutWrapper from "./components/CartCheckoutWrapper";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import { PetDetailPage } from "./components/PetDetails";
+import { PetsPage } from "./components/PetsPage";
+
 
 function Home() {
   return (
@@ -97,6 +99,7 @@ export default function App() {
                     }
                   />
                   <Route path="/pet/:slug" element={<PetDetailPage />} />
+                  <Route path="/pets" element={<PetsPage />} />
                 </Routes>
               </Layout>
             </Elements>

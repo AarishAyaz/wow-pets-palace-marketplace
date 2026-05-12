@@ -4,6 +4,7 @@ export interface RecommendationPayload {
   is_pets?: boolean;
   is_breed?: boolean;
   is_article?: boolean;
+  is_video?: boolean;
   limit?: number;
 }
 
@@ -12,5 +13,6 @@ export interface RecommendationResponse {
   products?: any[];
   breeds?: any[];
   articles?: any[];
+  videos?: any [];
 }
 

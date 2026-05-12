@@ -44,11 +44,25 @@ interface RecommendationBreed {
   tags: RecommendationTag[];
 }
 
+interface RecommendationVideo {
+  video_id: number;
+  title: string;
+  description: string;
+  video_url: string;
+  thumbnail_url: string | null;
+  duration_seconds: number;
+  total_views: number;
+  total_likes: number;
+  published_at: string;
+  tags: RecommendationTag[];
+}
+
 interface RecommendationsResponse {
   products?: RecommendationProduct[];
   pets?: RecommendationPet[];
   articles?: RecommendationArticle[];
   breeds?: RecommendationBreed[];
+  videos?: RecommendationVideo[];
 }
 
 export const useRecommendations = (payload: RecommendationPayload) => {
