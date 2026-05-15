@@ -40,7 +40,7 @@ import { Badge } from "./ui/badge";
 import { Separator } from "./ui/separator";
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useParams } from "react-router-dom";
-import { ProductCard } from "./ProductCard";
+import { ProductCardrelated } from "./ProductCardrelated";
 import { useNavigate } from "react-router-dom";
 
 // Inject keyframes once
@@ -1291,7 +1291,106 @@ export function PetDetailPage() {
             </Card>
           </div>
         </div>
-        {/* ── VIDEOS SECTION ─────────────────────────────────────────────────────── */}
+       
+
+        {/* Location Section */}
+        <div className="mt-16">
+          <div className="grid grid-cols-1 lg:grid-cols-2 items-start gap-6">
+            <div className="flex flex-col gap-4 h-full">
+              <h2 className="text-2xl font-bold">Location</h2>
+              <Card className="border-border/50 overflow-hidden rounded-xl shadow-md">
+                <div className="w-full h-96">
+                  {pet.location.latitude && pet.location.longitude ? (
+                    <iframe
+                      src={getMapEmbedUrl()}
+                      width="100%"
+                      height="100%"
+                      style={{ border: 0 }}
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      className="w-full h-full"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                      Location not available
+                    </div>
+                  )}
+                </div>
+              </Card>
+
+              {pet.location.latitude && pet.location.longitude && (
+                <Card className="border-border/50">
+                  <CardContent className="p-6">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg mt-0.5">
+                        <MapPin className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground">
+                          {pet.location.address}
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {pet.location.country}
+                        </p>
+                        <div className="mt-3 text-xs text-muted-foreground">
+                          Lat: {pet.location.latitude || "N/A"} <br />
+                          Lng: {pet.location.longitude || "N/A"}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            {products?.length > 0 && (
+              <div className="flex flex-col gap-4 h-full">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold">Recommended Products</h2>
+                  <span className="text-sm text-muted-foreground">
+                    {products.length} item{products.length !== 1 ? "s" : ""}
+                  </span>
+                </div>
+                <div
+                  className="flex-1 min-h-0 overflow-y-auto pr-1 h-[530px]"
+                  style={{
+                    scrollbarWidth: "thin",
+                    scrollbarColor: "hsl(var(--border)) transparent",
+                  }}
+                >
+                  <div className="grid grid-cols-2 gap-3">
+                    {products.map((product: any) => (
+                      <div key={product.id} className="flex flex-col">
+                        <ProductCardrelated
+                          id={product.id}
+                          slug={product.slug}
+                          name={product.name}
+                          image={
+                            product.featured_image
+                              ? `https://wowpetspalace.com/test/${product.featured_image}`
+                              : "/fallback.jpg"
+                          }
+                          price={product.original_price ?? 0}
+                          originalPrice={product.unit_price ?? undefined}
+                          discountPercentage={product.is_discount ?? 0}
+                          rating={product.overall_rating ?? 0}
+                          reviewsCount={null}
+                          category={product.tags?.[0]?.name}
+                          shipping_cost={product.shipping_cost ?? 0}
+                          shop_id={product.shop_id}
+                          shopName={product.shop_name ?? ""}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+            {(!products || products.length === 0) && <div />}
+          </div>
+        </div>
+
+         {/* ── VIDEOS SECTION ─────────────────────────────────────────────────────── */}
         {videos.length > 0 && (
           <div className="mt-16 mb-12">
             <div className="mb-6">
@@ -1469,103 +1568,6 @@ export function PetDetailPage() {
             </div>
           </div>
         )}
-
-        {/* Location Section */}
-        <div className="mt-16">
-          <div className="grid grid-cols-1 lg:grid-cols-2 items-start gap-6">
-            <div className="flex flex-col gap-4 h-full">
-              <h2 className="text-2xl font-bold">Location</h2>
-              <Card className="border-border/50 overflow-hidden rounded-xl shadow-md">
-                <div className="w-full h-96">
-                  {pet.location.latitude && pet.location.longitude ? (
-                    <iframe
-                      src={getMapEmbedUrl()}
-                      width="100%"
-                      height="100%"
-                      style={{ border: 0 }}
-                      loading="lazy"
-                      referrerPolicy="no-referrer-when-downgrade"
-                      className="w-full h-full"
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-muted-foreground">
-                      Location not available
-                    </div>
-                  )}
-                </div>
-              </Card>
-
-              {pet.location.latitude && pet.location.longitude && (
-                <Card className="border-border/50">
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 bg-primary/10 rounded-lg mt-0.5">
-                        <MapPin className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-foreground">
-                          {pet.location.address}
-                        </p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {pet.location.country}
-                        </p>
-                        <div className="mt-3 text-xs text-muted-foreground">
-                          Lat: {pet.location.latitude || "N/A"} <br />
-                          Lng: {pet.location.longitude || "N/A"}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-
-            {products?.length > 0 && (
-              <div className="flex flex-col gap-4 h-full">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold">Recommended Products</h2>
-                  <span className="text-sm text-muted-foreground">
-                    {products.length} item{products.length !== 1 ? "s" : ""}
-                  </span>
-                </div>
-                <div
-                  className="flex-1 min-h-0 overflow-y-auto pr-1 h-[530px]"
-                  style={{
-                    scrollbarWidth: "thin",
-                    scrollbarColor: "hsl(var(--border)) transparent",
-                  }}
-                >
-                  <div className="grid grid-cols-2 gap-3">
-                    {products.map((product: any) => (
-                      <div key={product.id} className="flex flex-col">
-                        <ProductCard
-                          id={product.id}
-                          slug={product.slug}
-                          name={product.name}
-                          image={
-                            product.featured_image
-                              ? `https://wowpetspalace.com/test/${product.featured_image}`
-                              : "/fallback.jpg"
-                          }
-                          price={product.original_price ?? 0}
-                          originalPrice={product.unit_price ?? undefined}
-                          discountPercentage={product.is_discount ?? 0}
-                          rating={product.overall_rating ?? 0}
-                          reviewsCount={null}
-                          category={product.tags?.[0]?.name}
-                          shipping_cost={product.shipping_cost ?? 0}
-                          shop_id={product.shop_id}
-                          shopName={product.shop_name ?? ""}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-            {(!products || products.length === 0) && <div />}
-          </div>
-        </div>
 
         {/* Related Pets */}
         {pets?.length > 0 && (

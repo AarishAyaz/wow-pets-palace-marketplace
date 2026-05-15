@@ -1,7 +1,6 @@
 import { Search, MapPin, Filter, X, SlidersHorizontal, ChevronLeft, ChevronRight, Heart } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { ScrollArea } from "./ui/scroll-area";
 import { Badge } from "./ui/badge";
 import { Card, CardContent } from "./ui/card";
 import { useEffect, useState, useCallback } from "react";
@@ -58,37 +57,39 @@ const getImage = (images: PetImage[]) => {
 const normalize = (s: string) => s?.toLowerCase().replace(/\s+/g, "").trim();
 
 const getStatusConfig = (type: string, price: number) => {
-  switch (normalize(type)) {
-    case "adoption":
-      return {
-        label: "Adopt Me",
-        buttonColor: "bg-amber-500 hover:bg-amber-600 text-white",
-        badgeColor: "bg-amber-500 text-white",
-        dot: "bg-amber-400",
-      };
-    case "sale":
-      return {
-        label: `$${price}`,
-        buttonColor: "bg-emerald-500 hover:bg-emerald-600 text-white",
-        badgeColor: "bg-emerald-500 text-white",
-        dot: "bg-emerald-400",
-      };
-    case "lost":
-      return {
-        label: "Lost",
-        buttonColor: "bg-rose-600 hover:bg-rose-700 text-white",
-        badgeColor: "bg-rose-600 text-white",
-        dot: "bg-rose-400",
-      };
-    default:
-      return {
-        label: type,
-        buttonColor: "bg-gray-500 text-white",
-        badgeColor: "bg-gray-500 text-white",
-        dot: "bg-gray-400",
-      };
-  }
-};
+    const t = normalize(type);
+
+    switch (t) {
+      case "adoption":
+        return {
+          label: "Adopt Me",
+          buttonColor: "bg-yellow-500 hover:bg-yellow-600 text-white",
+          badgeColor: "bg-yellow-500 text-white",
+        };
+
+      case "sale":
+        return {
+          label: `$${price}`,
+          buttonColor: "bg-green-500 hover:bg-green-600 text-white",
+          badgeColor: "bg-green-500 text-white",
+        };
+
+      case "lost":
+        return {
+          label: "Lost",
+          buttonColor: "bg-red-600 hover:bg-red-700 text-white",
+          badgeColor: "bg-red-600 text-white",
+        };
+
+      default:
+        console.log("UNMATCHED TYPE:", type);
+        return {
+          label: type,
+          buttonColor: "bg-gray-500 text-white",
+          badgeColor: "bg-gray-500 text-white",
+        };
+    }
+  };
 
 const calculateAge = (dob: string) => {
   if (!dob) return null;
@@ -112,11 +113,11 @@ function PetCard({ item, onClick }: { item: Pet; onClick: () => void }) {
   return (
     <Card
       onClick={onClick}
-      className="group cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl border-0 overflow-hidden bg-card rounded-2xl"
+      className="group cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl border-0 overflow-hidden bg-card rounded-xl"
       style={{ boxShadow: "0 2px 16px -4px rgba(0,0,0,0.08)" }}
     >
       {/* Image */}
-      <div className="relative overflow-hidden" style={{ height: 220 }}>
+      <div className="relative overflow-hidden" style={{ height: 240 }}>
         <img
           src={getImage(item.images)}
           alt={item.pet_name}
@@ -129,7 +130,7 @@ function PetCard({ item, onClick }: { item: Pet; onClick: () => void }) {
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
         {/* Status badge top-left */}
-        <Badge className={`absolute top-3 left-3 border-0 text-xs font-bold tracking-wide ${cfg.badgeColor}`}>
+        <Badge className={`absolute top-3 left-3 flex justify-center border-0 text-xs font-bold tracking-wide ${cfg.badgeColor}`}>
           <span className={`inline-block w-1.5 h-1.5 rounded-full ${cfg.dot} mr-1.5`} />
           {item.type.toUpperCase()}
         </Badge>
@@ -151,7 +152,7 @@ function PetCard({ item, onClick }: { item: Pet; onClick: () => void }) {
       </div>
 
       {/* Content */}
-      <CardContent className="p-5">
+      <CardContent className="p-4 space-y-4">
         <div className="flex items-start justify-between gap-2 mb-1">
           <h3 className="font-bold text-base text-foreground leading-tight line-clamp-1">
             {item.pet_name}
@@ -358,7 +359,7 @@ export function PetsPage() {
 
       {/* Status */}
       <div>
-        <h4 className="font-semibold text-sm mb-2 text-foreground">Listing Type</h4>
+        <h4 className="font-bold text-sm mb-2 text-foreground">Listing Type</h4>
         <div className="flex flex-wrap gap-2">
           {["adoption", "sale", "lost"].map(s => (
             <FilterPill
@@ -373,7 +374,7 @@ export function PetsPage() {
 
       {/* Gender */}
       <div>
-        <h4 className="font-semibold text-sm mb-2 text-foreground">Gender</h4>
+        <h4 className="font-bold text-sm mb-2 text-foreground">Gender</h4>
         <div className="flex flex-wrap gap-2">
           {["male", "female"].map(g => (
             <FilterPill
@@ -388,7 +389,7 @@ export function PetsPage() {
 
       {/* Size */}
       <div>
-        <h4 className="font-semibold text-sm mb-2 text-foreground">Size</h4>
+        <h4 className="font-bold text-sm mb-2 text-foreground">Size</h4>
         <div className="flex flex-wrap gap-2">
           {["small", "medium", "large", "giant"].map(s => (
             <FilterPill
@@ -403,7 +404,7 @@ export function PetsPage() {
 
       {/* Price (for sale listings) */}
       <div>
-        <h4 className="font-semibold text-sm mb-2 text-foreground">Price Range</h4>
+        <h4 className="font-bold text-sm mb-2 text-foreground">Price Range</h4>
         <div className="flex gap-2 mb-2">
           <Input
             type="number"
@@ -428,48 +429,13 @@ export function PetsPage() {
         </button>
       </div>
 
-      {/* Categories */}
-      {categories.length > 0 && (
-        <div>
-          <h4 className="font-semibold text-sm mb-2 text-foreground">Categories</h4>
-          <ScrollArea className="h-[160px] pr-2">
-            <ul className="space-y-1">
-              <li>
-                <button
-                  onClick={() => setSelectedCategories([])}
-                  className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                    selectedCategories.length === 0
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-muted"
-                  }`}
-                >
-                  All Categories
-                </button>
-              </li>
-              {categories.map(cat => (
-                <li key={cat.id}>
-                  <button
-                    onClick={() => toggleItem(selectedCategories, setSelectedCategories, cat.id)}
-                    className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                      selectedCategories.includes(cat.id)
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-muted"
-                    }`}
-                  >
-                    {cat.name}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </ScrollArea>
-        </div>
-      )}
+  
 
       {/* Tags */}
       {tags.length > 0 && (
         <div>
-          <h4 className="font-semibold text-sm mb-2 text-foreground">Tags</h4>
-          <div className="flex flex-wrap gap-1.5">
+          <h4 className="font-bold text-sm mb-2 text-foreground">Tags</h4>
+          <div className="grid grid-cols-3 gap-2 mb-3">
             {tags.map(tag => (
               <FilterPill
                 key={tag.id}
@@ -496,10 +462,10 @@ export function PetsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
+      <main className="container mx-auto px-4  py-8 ">
 
         {/* ── Hero header ─────────────────────────────────────────── */}
-<div className="text-center space-y-4 pt-6 lg:pt-10 pb-8 lg:pb-12">
+<div className="text-center space-y-4 pt-8 lg:pt-10 pb-8 lg:pb-12">
               <p className="text-xs font-semibold uppercase tracking-widest text-primary/70">
             Find your companion
           </p>
@@ -516,7 +482,7 @@ export function PetsPage() {
         </div>
 
         {/* ── Search bar ──────────────────────────────────────────── */}
-        <div className="max-w-2xl mx-auto mb-8">
+        <div className="max-w-3xl mx-auto mb-8">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
@@ -537,7 +503,7 @@ export function PetsPage() {
         </div>
 
         {/* ── Mobile filter toggle ─────────────────────────────────── */}
-        <div className="flex items-center justify-between mb-4 lg:hidden">
+        <div className="flex items-center justify-between mb-4 hidden max-lg:flex">
           <p className="text-sm text-muted-foreground">
             {totalCount > 0 ? `${totalCount} pets found` : ""}
           </p>
@@ -564,8 +530,7 @@ export function PetsPage() {
               className="absolute inset-0 bg-black/40 backdrop-blur-sm"
               onClick={() => setSidebarOpen(false)}
             />
-            <div className="absolute right-0 top-0 bottom-0 w-80 bg-card shadow-2xl overflow-y-auto p-6">
-              <div className="flex items-center justify-between mb-6">
+<div className="absolute right-0 top-0 bottom-0 w-[88%] max-w-sm bg-card shadow-2xl overflow-y-auto p-6">              <div className="flex items-center justify-between mb-6">
                 <h3 className="font-bold text-base">Filters</h3>
                 <button onClick={() => setSidebarOpen(false)}>
                   <X className="w-5 h-5 text-muted-foreground" />
@@ -576,47 +541,42 @@ export function PetsPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-[300px_minmax(0,1fr)] gap-8 items-start">
+<div className="flex flex-col lg:flex-row gap-6">
 
-          {/* ── Desktop Sidebar ──────────────────────────────────────── */}
-        {/* ── Desktop Sidebar ──────────────────────────────────────── */}
-<aside className="hidden block sticky top-24 self-start">
-  <div
-    className="w-[300px] bg-card rounded-3xl border border-border/50 p-6"
-    style={{
-      boxShadow: "0 8px 30px rgba(0,0,0,0.06)",
-    }}
-  >
-    <div className="flex items-center justify-between mb-6">
-      <div className="flex items-center gap-2">
-        <Filter className="w-4 h-4 text-primary" />
-        <h3 className="font-semibold text-sm tracking-wide uppercase">
-          Filters
-        </h3>
+  {/* Sidebar */}
+  <aside className="w-80 shrink-0 lg:block">
+    <div className="bg-card rounded-xl border p-6 sticky top-24 flex flex-col gap-6">
+      
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Filter className="w-4 h-4 text-primary" />
+          <h3 className="font-bold text-lg">
+            Filters
+          </h3>
+
+          {activeFilterCount > 0 && (
+            <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center font-bold">
+              {activeFilterCount}
+            </span>
+          )}
+        </div>
 
         {activeFilterCount > 0 && (
-          <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center font-bold">
-            {activeFilterCount}
-          </span>
+          <button
+            onClick={clearAll}
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Clear
+          </button>
         )}
       </div>
 
-      {activeFilterCount > 0 && (
-        <button
-          onClick={clearAll}
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-        >
-          Clear
-        </button>
-      )}
+      <SidebarContent />
     </div>
-
-    <SidebarContent />
-  </div>
-</aside>
+  </aside>
 
           {/* ── Products grid ────────────────────────────────────────── */}
-          <section className="min-w-0 space-y-6">
+          <section className="flex-1">
 
             {/* Count + active filters */}
             <div className="hidden lg:flex items-center justify-between mb-5">
@@ -666,8 +626,8 @@ export function PetsPage() {
                 <Button variant="outline" onClick={clearAll}>Clear all filters</Button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {pets.map(pet => (
+<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">    
+             {pets.map(pet => (
                   <PetCard
                     key={pet.listing_id}
                     item={pet}
@@ -679,7 +639,7 @@ export function PetsPage() {
 
             {/* Pagination */}
             {!loading && totalPages > 1 && (
-              <div className="flex items-center justify-center gap-3 mt-10">
+              <div className="flex items-center justify-center gap-4 mt-8">
                 <Button
                   variant="outline"
                   size="icon"
@@ -733,7 +693,7 @@ export function PetsPage() {
 
             {/* Page info */}
             {!loading && pets.length > 0 && (
-              <p className="text-center text-xs text-muted-foreground mt-3">
+              <p className="text-center text-xs text-muted-foreground mt-8">
                 Page {currentPage} of {totalPages} · {totalCount} total pets
               </p>
             )}
