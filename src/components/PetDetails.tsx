@@ -1360,9 +1360,7 @@ export function PetDetailPage() {
                                   preload="metadata"
                                 />
                               )}
-                              <div className="absolute bottom-2 right-2 z-50 bg-black/90 text-white text-[11px] font-semibold px-2 py-1 rounded-md leading-none shadow-xl">
-                                {duration}
-                              </div>
+
                               {isActive && (
                                 <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                                   <div className="w-10 h-10 rounded-full bg-primary/90 flex items-center justify-center">
@@ -1374,10 +1372,18 @@ export function PetDetailPage() {
 
                             {/* Video Info */}
                             <div className="flex flex-1 flex-col space-y-4 min-w-0">
-                              <h4 className="text-sm font-medium text-foreground line-clamp-2 mb-1">
-                                {video.title}
-                              </h4>
+                              <div className="flex items-start justify-between gap-2">
+                                <h4 className="text-sm font-medium text-foreground line-clamp-2 flex-1">
+                                  {video.title}
+                                </h4>
 
+                                <Badge className="shrink-0  text-white border-0 text-[10px] font-medium px-2 py-0 rounded-md">
+                                  {duration}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center text-sm">
+                                <span>{video.description}</span>
+                              </div>
                               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                                 <Eye className="w-3 h-3" />
                                 <span>
