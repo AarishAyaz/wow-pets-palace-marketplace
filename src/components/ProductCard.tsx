@@ -6,6 +6,7 @@ import { ShoppingCart, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/context/CartContext";
 import { useState } from "react";
+import { LazyLoadImage } from "react-lazy-load-image-component";
 
 interface ProductCardProps {
   id: number | string;
@@ -55,7 +56,7 @@ export function ProductCard({
       {/* Image */}
       <div className="relative h-70 w-full">
         <div className="w-full h-56 lg:h-52 bg-gray-50 flex items-center justify-center overflow-hidden">
-          <ImageWithFallback
+          <LazyLoadImage
             src={image}
             alt={name}
             className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105"

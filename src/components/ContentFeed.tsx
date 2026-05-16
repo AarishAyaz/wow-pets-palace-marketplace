@@ -7,6 +7,7 @@ import { PetDetailPage } from "./PetDetails";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Item } from "@radix-ui/react-dropdown-menu";
+import { LazyLoadImage } from "react-lazy-load-image-component";
 
 type PetImage = {
   image_url: string;
@@ -182,7 +183,7 @@ export function ContentFeed() {
                 }
               >
                 <div className="relative">
-                  <ImageWithFallback
+                  <LazyLoadImage
                     src={getImage(item.images)}
                     alt={item.pet_name}
                     className="w-full h-48 object-cover"

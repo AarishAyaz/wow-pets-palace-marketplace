@@ -200,6 +200,7 @@ import { Button } from "./ui/button";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import { useRef } from "react";
+import { LazyLoadImage } from "react-lazy-load-image-component";
 
 interface Breed {
   breed_id: number;
@@ -292,7 +293,7 @@ export function BreedsSection() {
             >
               <CardContent className="p-0">
                 <div className="relative overflow-hidden rounded-t-lg">
-                  <ImageWithFallback
+                  <LazyLoadImage
                     src={`https://www.wowpetspalace.com/dashboard${breed.breed_images[0]}`}
                     alt={breed.breed_title}
                     className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"

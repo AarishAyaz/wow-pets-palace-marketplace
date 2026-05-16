@@ -1,4 +1,14 @@
-import { Search, MapPin, Filter, X, SlidersHorizontal, ChevronLeft, ChevronRight, Heart } from "lucide-react";
+import {
+  Search,
+  MapPin,
+  Filter,
+  X,
+  SlidersHorizontal,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  Heart,
+} from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
@@ -6,6 +16,7 @@ import { Card, CardContent } from "./ui/card";
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { LazyLoadImage } from "react-lazy-load-image-component";
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
 interface PetImage {
@@ -118,13 +129,16 @@ function PetCard({ item, onClick }: { item: Pet; onClick: () => void }) {
     >
       {/* Image */}
       <div className="relative overflow-hidden" style={{ height: 240 }}>
-        <img
-          src={getImage(item.images)}
-          alt={item.pet_name}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-          onError={(e) => { (e.target as HTMLImageElement).src = "/fallback.jpg"; }}
-          loading="lazy"
-        />
+        <LazyLoadImage
+  src={getImage(item.images)}
+  alt={item.pet_name}
+  effect="blur"
+  wrapperClassName="w-full h-full"
+  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+  onError={(e: any) => {
+    e.target.src = "/fallback.jpg";
+  }}
+/>
 
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
@@ -194,13 +208,15 @@ function PetCard({ item, onClick }: { item: Pet; onClick: () => void }) {
           <MapPin className="w-3 h-3 shrink-0" />
           <span className="line-clamp-1">{item.address || "Location not available"}</span>
         </p>
-
-        <Button
+          <div className="flex items-end justify-end">
+             <Button
           className={`w-full rounded-xl text-sm font-semibold h-9 ${cfg.buttonColor}`}
           onClick={(e: any) => e.stopPropagation()}
         >
           {cfg.label}
         </Button>
+          </div>
+       
       </CardContent>
     </Card>
   );
@@ -222,6 +238,7 @@ function PetCardSkeleton() {
   );
 }
 
+/* ─── Main Page ───────────────────────────────────────────────────────────── */
 /* ─── Main Page ───────────────────────────────────────────────────────────── */
 export function PetsPage() {
   const navigate = useNavigate();
@@ -260,17 +277,7 @@ export function PetsPage() {
     setCurrentPage(1);
   }, [debouncedSearch, selectedStatus, selectedGenders, selectedSizes, selectedCategories, selectedTags, minPrice, maxPrice]);
 
-  /* --- fetch categories --- */
-  useEffect(() => {
-    axios
-      .get(`${BASE}/subCategory/getCountCategoryProduct`)
-      .then(({ data }) => {
-        setCategories(
-          (data.result || []).map((c: any) => ({ id: c.category_id, name: c.category_name }))
-        );
-      })
-      .catch(() => {});
-  }, []);
+ 
 
   /* --- fetch tags --- */
   useEffect(() => {
@@ -280,38 +287,88 @@ export function PetsPage() {
       .catch(() => {});
   }, []);
 
-  /* --- fetch pets --- */
-  const fetchPets = useCallback(async () => {
-    try {
-      setLoading(true);
-      const params: Record<string, any> = {
-        page: currentPage,
-        limit: ITEMS_PER_PAGE,
-      };
+ /* --- fetch pets --- */
+const fetchPets = useCallback(async () => {
+  try {
+    setLoading(true);
 
-      if (debouncedSearch) params.query = debouncedSearch;
-      if (selectedStatus.length) params["type[]"] = selectedStatus;
-      if (selectedGenders.length) params["gender[]"] = selectedGenders;
-      if (selectedSizes.length) params["size[]"] = selectedSizes;
-      if (selectedCategories.length) params["cat_id[]"] = selectedCategories;
-      if (selectedTags.length) params["tag_id[]"] = selectedTags;
-      if (minPrice !== null) params.min_price = minPrice;
-      if (maxPrice !== null) params.max_price = maxPrice;
+    const params: Record<string, any> = {
+      page: currentPage,
+      limit: ITEMS_PER_PAGE,
+    };
 
-      const { data } = await axios.get(`${BASE}/pets/pet-listings`, { params });
-
-      if (data.success) {
-        setPets(data.data || []);
-        setTotalCount(data.total || 0);
-        setTotalPages(data.totalPages || Math.ceil((data.total || 0) / ITEMS_PER_PAGE) || 1);
-      }
-    } catch (err) {
-      console.error("Error fetching pets:", err);
-    } finally {
-      setLoading(false);
+    // Search
+    if (debouncedSearch.trim()) {
+      params.query = debouncedSearch.trim();
     }
-  }, [currentPage, debouncedSearch, selectedStatus, selectedGenders, selectedSizes, selectedCategories, selectedTags, minPrice, maxPrice]);
 
+    // Listing Type
+    if (selectedStatus.length === 1) {
+      params.type = selectedStatus[0];
+    }
+
+    // Gender
+    if (selectedGenders.length === 1) {
+      params.gender = selectedGenders[0];
+    }
+
+    // Size
+    if (selectedSizes.length === 1) {
+      params.size_category = selectedSizes[0];
+    }
+
+    // Category
+    if (selectedCategories.length === 1) {
+      params.category_id = selectedCategories[0];
+    }
+
+    // Price
+    if (minPrice !== null) {
+      params.min_price = minPrice;
+    }
+
+    if (maxPrice !== null) {
+      params.max_price = maxPrice;
+    }
+
+    const { data } = await axios.get(
+      `${BASE}/pets/pet-listings`,
+      { params }
+    );
+
+    if (data.success) {
+      setPets(data.data || []);
+      setTotalCount(data.total || 0);
+
+      setTotalPages(
+        data.totalPages ||
+        Math.ceil((data.total || 0) / ITEMS_PER_PAGE) ||
+        1
+      );
+    } else {
+      setPets([]);
+      setTotalCount(0);
+      setTotalPages(1);
+    }
+  } catch (error) {
+    console.error("Fetch pets error:", error);
+
+    setPets([]);
+    setTotalCount(0);
+    setTotalPages(1);
+  } finally {
+    setLoading(false);
+  }
+}, [
+  currentPage,
+  debouncedSearch,
+  selectedStatus,
+  selectedGenders,
+  selectedSizes,
+  selectedCategories,
+  minPrice,
+  maxPrice,
+]);
   useEffect(() => { fetchPets(); }, [fetchPets]);
 
   /* --- filter helpers --- */
@@ -323,7 +380,6 @@ export function PetsPage() {
     setSelectedStatus([]);
     setSelectedGenders([]);
     setSelectedSizes([]);
-    setSelectedCategories([]);
     setSelectedTags([]);
     setMinPrice(null);
     setMaxPrice(null);
@@ -356,7 +412,6 @@ export function PetsPage() {
   /* --- sidebar content (shared for desktop + mobile drawer) --- */
   const SidebarContent = () => (
     <div className="flex flex-col gap-6">
-
       {/* Status */}
       <div>
         <h4 className="font-bold text-sm mb-2 text-foreground">Listing Type</h4>
@@ -429,8 +484,6 @@ export function PetsPage() {
         </button>
       </div>
 
-  
-
       {/* Tags */}
       {tags.length > 0 && (
         <div>
@@ -462,11 +515,11 @@ export function PetsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4  py-8 ">
+      <main className="container mx-auto px-4 py-8">
 
         {/* ── Hero header ─────────────────────────────────────────── */}
-<div className="text-center space-y-4 pt-8 lg:pt-10 pb-8 lg:pb-12">
-              <p className="text-xs font-semibold uppercase tracking-widest text-primary/70">
+        <div className="text-center space-y-4 pt-8 lg:pt-10 pb-8 lg:pb-12">
+          <p className="text-xs font-semibold uppercase tracking-widest text-primary/70">
             Find your companion
           </p>
           <h1 className="text-4xl lg:text-5xl font-bold text-foreground">
@@ -502,38 +555,42 @@ export function PetsPage() {
           </div>
         </div>
 
-        {/* ── Mobile filter toggle ─────────────────────────────────── */}
-        <div className="flex items-center justify-between mb-4 hidden max-lg:flex">
-          <p className="text-sm text-muted-foreground">
-            {totalCount > 0 ? `${totalCount} pets found` : ""}
-          </p>
+        {/* Mobile Filter Toggle Button (Hidden on lg layout) */}
+        <div className="flex hidden sm:block items-center justify-end mb-4">
           <Button
             variant="outline"
-            size="sm"
-            className="gap-2"
-            onClick={() => setSidebarOpen(true)}
+            onClick={() => setSidebarOpen(prev => !prev)}
+            className="h-10 px-4 rounded-xl gap-2 shadow-sm"
           >
             <SlidersHorizontal className="w-4 h-4" />
-            Filters
+            <span className="text-sm font-medium">Filters</span>
             {activeFilterCount > 0 && (
-              <span className="ml-1 w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-bold">
+              <span className="flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
                 {activeFilterCount}
               </span>
             )}
+            <ChevronDown
+              className={`w-4 h-4 transition-transform duration-300 ${
+                sidebarOpen ? "rotate-180" : ""
+              }`}
+            />
           </Button>
         </div>
 
-        {/* ── Mobile drawer overlay ────────────────────────────────── */}
+        {/* Mobile Collapsible Dropdown Filters Container */}
         {sidebarOpen && (
-          <div className="fixed inset-0 z-50 lg:hidden">
-            <div
-              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-              onClick={() => setSidebarOpen(false)}
-            />
-<div className="absolute right-0 top-0 bottom-0 w-[88%] max-w-sm bg-card shadow-2xl overflow-y-auto p-6">              <div className="flex items-center justify-between mb-6">
-                <h3 className="font-bold text-base">Filters</h3>
-                <button onClick={() => setSidebarOpen(false)}>
-                  <X className="w-5 h-5 text-muted-foreground" />
+          <div className="lg:hidden mb-6 animate-in slide-in-from-top-2 duration-300">
+            <div className="bg-card border rounded-2xl p-4 shadow-sm">
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-primary" />
+                  <h3 className="font-semibold text-base">Filters</h3>
+                </div>
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-4 h-4" />
                 </button>
               </div>
               <SidebarContent />
@@ -541,64 +598,59 @@ export function PetsPage() {
           </div>
         )}
 
-<div className="flex flex-col lg:flex-row gap-6">
+        {/* ── Main Layout Wrapper (Flex-col on mobile, flex-row on desktop) ── */}
+        <div className="flex flex-col lg:flex-row gap-6">
 
-  {/* Sidebar */}
-  <aside className="w-80 shrink-0 lg:block">
-    <div className="bg-card rounded-xl border p-6 sticky top-24 flex flex-col gap-6">
-      
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-primary" />
-          <h3 className="font-bold text-lg">
-            Filters
-          </h3>
+          {/* Desktop Sidebar Layout (Hidden on mobile/tablet, always visible on large screen laptops) */}
+          <aside className="sm:hidden w-80 shrink-0">
+            <div className="bg-card rounded-xl border p-6 sticky top-24 flex flex-col gap-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-primary" />
+                  <h3 className="font-bold text-lg">Filters</h3>
+                  {activeFilterCount > 0 && (
+                    <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center font-bold">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </div>
+                {activeFilterCount > 0 && (
+                  <button
+                    onClick={clearAll}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Clear All
+                  </button>
+                )}
+              </div>
+              <SidebarContent />
+            </div>
+          </aside>
 
-          {activeFilterCount > 0 && (
-            <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center font-bold">
-              {activeFilterCount}
-            </span>
-          )}
-        </div>
-
-        {activeFilterCount > 0 && (
-          <button
-            onClick={clearAll}
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Clear
-          </button>
-        )}
-      </div>
-
-      <SidebarContent />
-    </div>
-  </aside>
-
-          {/* ── Products grid ────────────────────────────────────────── */}
+          {/* ── Products Grid Section (Expands dynamically next to desktop sidebar) ── */}
           <section className="flex-1">
 
-            {/* Count + active filters */}
-            <div className="hidden lg:flex items-center justify-between mb-5">
+            {/* Count + active filters bar */}
+            <div className="flex items-center justify-between mb-5">
               <p className="text-sm text-muted-foreground">
-                {loading ? "Loading…" : totalCount > 0 ? `${totalCount} pets found` : ""}
+                {loading ? "Loading…" : totalCount > 0 ? `${totalCount} pets found` : "0 pets found"}
               </p>
               {activeFilterCount > 0 && (
-                <div className="flex items-center gap-2 flex-wrap justify-end">
+                <div className="hidden sm:flex items-center gap-2 flex-wrap justify-end">
                   {selectedStatus.map(s => (
-                    <span key={s} className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                    <span key={s} className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium capitalize">
                       {s}
                       <button onClick={() => toggleItem(selectedStatus, setSelectedStatus, s)}><X className="w-3 h-3" /></button>
                     </span>
                   ))}
                   {selectedGenders.map(g => (
-                    <span key={g} className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                    <span key={g} className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium capitalize">
                       {g}
                       <button onClick={() => toggleItem(selectedGenders, setSelectedGenders, g)}><X className="w-3 h-3" /></button>
                     </span>
                   ))}
                   {selectedSizes.map(s => (
-                    <span key={s} className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                    <span key={s} className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium capitalize">
                       {s}
                       <button onClick={() => toggleItem(selectedSizes, setSelectedSizes, s)}><X className="w-3 h-3" /></button>
                     </span>
@@ -607,7 +659,7 @@ export function PetsPage() {
               )}
             </div>
 
-            {/* Grid */}
+            {/* Content Display (Skeletons / Empty / Cards Grid) */}
             {loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
@@ -626,8 +678,8 @@ export function PetsPage() {
                 <Button variant="outline" onClick={clearAll}>Clear all filters</Button>
               </div>
             ) : (
-<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">    
-             {pets.map(pet => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">    
+                {pets.map(pet => (
                   <PetCard
                     key={pet.listing_id}
                     item={pet}
@@ -637,7 +689,7 @@ export function PetsPage() {
               </div>
             )}
 
-            {/* Pagination */}
+            {/* Pagination Controls */}
             {!loading && totalPages > 1 && (
               <div className="flex items-center justify-center gap-4 mt-8">
                 <Button
@@ -650,7 +702,7 @@ export function PetsPage() {
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
 
-                {/* Page numbers */}
+                {/* Page numbers items */}
                 <div className="flex items-center gap-1">
                   {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                     let page: number;
@@ -691,7 +743,7 @@ export function PetsPage() {
               </div>
             )}
 
-            {/* Page info */}
+            {/* Page info block */}
             {!loading && pets.length > 0 && (
               <p className="text-center text-xs text-muted-foreground mt-8">
                 Page {currentPage} of {totalPages} · {totalCount} total pets

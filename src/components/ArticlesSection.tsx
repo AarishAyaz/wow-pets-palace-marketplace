@@ -246,6 +246,7 @@ import { ChevronLeft, ChevronRight, Clock, User, ArrowRight } from 'lucide-react
 import { useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
+import { LazyLoadImage } from 'react-lazy-load-image-component';
 
 interface Article {
   id: number;
@@ -343,7 +344,7 @@ export function ArticlesSection() {
             >
               <CardContent className="p-0">
                 <div className="relative overflow-hidden rounded-t-lg">
-                  <ImageWithFallback
+                  <LazyLoadImage
                     src={`https://www.wowpetspalace.com/dashboard/${article.image}`}
                     alt={article.title}
                     className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
